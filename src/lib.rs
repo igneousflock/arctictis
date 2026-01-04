@@ -1,8 +1,12 @@
+mod codec;
+
 use std::time::Duration;
 
 use futures_util::{SinkExt, StreamExt};
 use tokio_serial::{SerialPortBuilderExt, SerialPortType, SerialStream};
-use tokio_util::codec::{AnyDelimiterCodec, AnyDelimiterCodecError, Framed};
+use tokio_util::codec::{AnyDelimiterCodecError, Framed};
+
+use crate::codec::Codec;
 
 const VENDOR_ID: u16 = 0x1965;
 const PRODUCT_ID: u16 = 0x0017;
@@ -23,7 +27,7 @@ pub enum Error {
 }
 
 #[derive(Debug)]
-pub struct Scanner(Framed<SerialStream, AnyDelimiterCodec>);
+pub struct Scanner(Framed<SerialStream, Codec>);
 
 impl Scanner {
     pub fn open() -> Result<Self, Error> {
@@ -42,7 +46,7 @@ impl Scanner {
             .timeout(Duration::from_secs(120))
             .open_native_async()?;
 
-        let framed = Framed::new(port, AnyDelimiterCodec::new(b"\r".to_vec(), b"\r".to_vec()));
+        let framed = Framed::new(port, Codec::new());
 
         Ok(Self(framed))
     }
@@ -50,7 +54,7 @@ impl Scanner {
     pub async fn command(&mut self, cmd: &str) -> Result<String, Error> {
         self.0.send(cmd).await?;
         let r = self.0.next().await.ok_or(Error::PortClosed)??;
-        Ok(String::from_utf8_lossy(&r).into_owned())
+        Ok(r)
     }
 
     pub async fn firmware_version(&mut self) -> Result<String, Error> {
