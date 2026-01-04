@@ -8,7 +8,7 @@ use tokio_util::codec::{AnyDelimiterCodecError, Framed};
 
 use crate::codec::Codec;
 
-pub use crate::codec::Command;
+pub use crate::codec::{Backlight, Command};
 
 const VENDOR_ID: u16 = 0x1965;
 const PRODUCT_ID: u16 = 0x0017;
@@ -54,6 +54,11 @@ impl Scanner {
         let framed = Framed::new(port, Codec::new());
 
         Ok(Self(framed))
+    }
+
+    pub async fn response(&mut self) -> Result<String, Error> {
+        let r = self.0.next().await.ok_or(Error::PortClosed)??;
+        Ok(r)
     }
 
     pub async fn command(&mut self, cmd: Command) -> Result<String, Error> {
