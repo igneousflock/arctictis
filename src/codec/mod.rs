@@ -1,33 +1,41 @@
+mod command;
+
+use bytes::BufMut;
 use tokio_util::codec::{AnyDelimiterCodec, Decoder, Encoder};
+
+pub use command::Command;
 
 #[derive(Clone, Debug)]
 pub struct Codec {
-    encoder: AnyDelimiterCodec,
+    // encoder: AnyDelimiterCodec,
     decoder: AnyDelimiterCodec,
 }
 
 impl Codec {
     pub fn new() -> Self {
-        let codec = AnyDelimiterCodec::new(b"\r".to_vec(), b"\r".to_vec());
+        let decoder = AnyDelimiterCodec::new(b"\r".to_vec(), b"\r".to_vec());
         Self {
-            encoder: codec.clone(),
-            decoder: codec,
+            // encoder: codec.clone(),
+            decoder,
         }
     }
 }
 
-impl<T> Encoder<T> for Codec
-where
-    T: AsRef<str>,
-{
-    type Error = <AnyDelimiterCodec as Encoder<T>>::Error;
+impl Encoder<Command> for Codec {
+    type Error = std::io::Error;
 
     fn encode(
         &mut self,
-        item: T,
+        item: Command,
         dst: &mut tokio_util::bytes::BytesMut,
     ) -> Result<(), Self::Error> {
-        self.encoder.encode(item, dst)
+        dst.reserve(4); // 3 chars for command, one for return code
+
+        let cmd: &'static str = item.into();
+        dst.extend_from_slice(cmd.as_bytes());
+        dst.put_u8(b'\r');
+
+        Ok(())
     }
 }
 

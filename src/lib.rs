@@ -8,6 +8,8 @@ use tokio_util::codec::{AnyDelimiterCodecError, Framed};
 
 use crate::codec::Codec;
 
+pub use crate::codec::Command;
+
 const VENDOR_ID: u16 = 0x1965;
 const PRODUCT_ID: u16 = 0x0017;
 
@@ -21,6 +23,9 @@ pub enum Error {
 
     #[error(transparent)]
     Codec(#[from] AnyDelimiterCodecError),
+
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
 
     #[error(transparent)]
     Serial(#[from] tokio_serial::Error),
@@ -51,13 +56,13 @@ impl Scanner {
         Ok(Self(framed))
     }
 
-    pub async fn command(&mut self, cmd: &str) -> Result<String, Error> {
+    pub async fn command(&mut self, cmd: Command) -> Result<String, Error> {
         self.0.send(cmd).await?;
         let r = self.0.next().await.ok_or(Error::PortClosed)??;
         Ok(r)
     }
 
     pub async fn firmware_version(&mut self) -> Result<String, Error> {
-        self.command("VER").await
+        self.command(Command::Ver).await
     }
 }
