@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 bytes = "1.11.0"
 futures-util = "0.3.31"
-strum = { version = "0.27.2", features = ["derive"] }
+strum = { version = "0.28.0", features = ["derive"] }
 thiserror = "2.0.17"
 tokio = { version = "1.49.0", features = ["macros", "rt-multi-thread", "time"] }
 tokio-serial = { version = "5.4.5", features = ["codec"] }
