@@ -1,5 +1,6 @@
 pub trait Command {
     fn as_bytes(&self) -> &'static [u8];
+
     fn params(&self) -> impl IntoIterator<Item = &dyn Param> {
         []
     }
@@ -9,49 +10,59 @@ pub trait Param {
     fn as_bytes(&self) -> &[u8];
 }
 
-pub struct GetFirmwareVersion;
-impl Command for GetFirmwareVersion {
-    fn as_bytes(&self) -> &'static [u8] {
-        b"VER"
-    }
-}
-
-pub struct GetBacklight;
-impl Command for GetBacklight {
-    fn as_bytes(&self) -> &'static [u8] {
-        b"BLT"
-    }
-}
-
-pub struct SetBacklight(Backlight);
-
-impl Command for SetBacklight {
-    fn as_bytes(&self) -> &'static [u8] {
-        b"BLT"
-    }
-
-    fn params(&self) -> impl IntoIterator<Item = &dyn Param> {
-        [&self.0 as &dyn Param]
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-pub enum Backlight {
-    AlwaysOn,
-    AlwaysOff,
-    Keypress,
-    Squelch,
-    KeySquelch,
-}
-
-impl Param for Backlight {
-    fn as_bytes(&self) -> &[u8] {
-        match self {
-            Self::AlwaysOn => b"AO",
-            Self::AlwaysOff => b"AF",
-            Self::Keypress => b"KY",
-            Self::Squelch => b"SQ",
-            Self::KeySquelch => b"KS",
+// TODO: don't require named params
+macro_rules! command {
+    ($cmd:literal, $name:ident) => {
+        pub struct $name;
+        impl Command for $name {
+            fn as_bytes(&self) -> &'static [u8] {
+                $cmd
+            }
         }
+    };
+    ($cmd:literal, $name: ident { $($param:ident: $param_ty:ty),+ }) => {
+        pub struct $name { $($param: $param_ty),+ }
+        impl Command for $name {
+            fn as_bytes(&self) -> &'static [u8] {
+                $cmd
+            }
+            fn params(&self) -> impl IntoIterator<Item = &dyn Param> {
+                [$(&self.$param as &dyn Param),+]
+            }
+        }
+    };
+}
+
+macro_rules! param {
+    (pub enum $name:ident { $($variant:ident => $val:literal),+ }) => {
+        pub enum $name {
+            $($variant),+
+        }
+        impl Param for $name {
+            fn as_bytes(&self) -> &[u8] {
+                match self {
+                    $(Self::$variant => $val),+
+                }
+            }
+        }
+    }
+}
+
+command!(b"VER", GetFirmwareVersion);
+command!(b"BLT", GetBacklight);
+command!(
+    b"BLT",
+    SetBacklight {
+        backlight: Backlight
+    }
+);
+
+param! {
+    pub enum Backlight {
+        AlwaysOn => b"AO",
+        AlwaysOff => b"AF",
+        Keypress => b"KY",
+        Squelch => b"SQ",
+        KeySquelch => b"KS"
     }
 }
