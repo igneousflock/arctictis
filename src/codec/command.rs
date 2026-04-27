@@ -1,6 +1,4 @@
-use std::fmt::Write;
-
-pub trait Command {
+pub trait Command: Send + Sync + Clone + std::fmt::Debug {
     fn as_bytes(&self) -> &'static [u8];
 
     fn params(&self) -> impl IntoIterator<Item = &dyn Param> {
@@ -14,18 +12,21 @@ pub trait Param {
 
 impl Param for u8 {
     fn write_bytes(&self, dst: &mut tokio_util::bytes::BytesMut) {
-        write!(dst, "{self}").unwrap();
+        let mut buff = itoa::Buffer::new();
+        dst.extend_from_slice(buff.format(*self).as_bytes());
     }
 }
 
 macro_rules! command {
     ($cmd:literal, $name:ident) => {
+        #[derive(Clone, Debug)]
         pub struct $name;
         impl Command for $name {
             fn as_bytes(&self) -> &'static [u8] { $cmd }
         }
     };
     ($cmd:literal, $name: ident ( $param_ty:ty )) => {
+        #[derive(Clone, Debug)]
         pub struct $name(pub $param_ty);
         impl Command for $name {
             fn as_bytes(&self) -> &'static [u8] { $cmd }
@@ -35,6 +36,7 @@ macro_rules! command {
         }
     };
     ($cmd:literal, $name: ident { $($param:ident: $param_ty:ty),+ }) => {
+        #[derive(Clone, Debug)]
         pub struct $name { $(pub $param: $param_ty),+ }
         impl Command for $name {
             fn as_bytes(&self) -> &'static [u8] { $cmd }
@@ -47,6 +49,7 @@ macro_rules! command {
 
 macro_rules! param {
     (pub enum $name:ident { $($variant:ident => $val:literal),+ $(,)? }) => {
+        #[derive(Clone, Debug)]
         pub enum $name {
             $($variant),+
         }
@@ -60,6 +63,7 @@ macro_rules! param {
         }
     };
     (pub range $name:ident ($range:expr)) => {
+        #[derive(Clone, Debug)]
         pub struct $name(u8);
         impl $name {
             pub fn new(value: u8) -> Self {

@@ -7,10 +7,9 @@ use tokio_serial::{SerialPortBuilderExt, SerialPortType, SerialStream};
 use tokio_util::codec::{AnyDelimiterCodecError, Framed};
 
 use crate::codec::Codec;
-use crate::codec::command::Command;
 
 pub use crate::codec::command::{
-    Backlight, BandPlan, BatteryChargeTime, BeepLevel, ClearAllMemory, EnterProgramMode,
+    Backlight, BandPlan, BatteryChargeTime, BeepLevel, ClearAllMemory, Command, EnterProgramMode,
     ExitProgramMode, GetBacklight, GetBandPlan, GetBatteryInfo, GetFirmwareVersion, GetKeyBeep,
     GetModelInfo, KeyLockStatus, SetBacklight, SetBandPlan, SetBatteryInfo, SetKeyBeep,
 };
