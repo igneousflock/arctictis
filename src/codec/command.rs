@@ -1,3 +1,5 @@
+use std::fmt::Write;
+
 pub trait Command {
     fn as_bytes(&self) -> &'static [u8];
 
@@ -7,7 +9,13 @@ pub trait Command {
 }
 
 pub trait Param {
-    fn as_bytes(&self) -> &[u8];
+    fn write_bytes(&self, dst: &mut tokio_util::bytes::BytesMut);
+}
+
+impl Param for u8 {
+    fn write_bytes(&self, dst: &mut tokio_util::bytes::BytesMut) {
+        write!(dst, "{self}").unwrap()
+    }
 }
 
 // TODO: don't require named params
@@ -21,7 +29,7 @@ macro_rules! command {
         }
     };
     ($cmd:literal, $name: ident { $($param:ident: $param_ty:ty),+ }) => {
-        pub struct $name { $($param: $param_ty),+ }
+        pub struct $name { $(pub $param: $param_ty),+ }
         impl Command for $name {
             fn as_bytes(&self) -> &'static [u8] {
                 $cmd
@@ -39,16 +47,35 @@ macro_rules! param {
             $($variant),+
         }
         impl Param for $name {
-            fn as_bytes(&self) -> &[u8] {
-                match self {
+            fn write_bytes(&self, dst: &mut tokio_util::bytes::BytesMut) {
+                let s = match self {
                     $(Self::$variant => $val),+
-                }
+                };
+                dst.extend_from_slice(s);
             }
         }
-    }
+    };
+    (pub range $name:ident ($range:expr)) => {
+        pub struct $name(u8);
+        impl $name {
+            pub fn new(value: u8) -> Self {
+                assert!($range.contains(&value));
+                Self(value)
+            }
+        }
+        impl Param for $name {
+            fn write_bytes(&self, dst: &mut tokio_util::bytes::BytesMut) {
+                self.0.write_bytes(dst);
+            }
+        }
+    };
 }
 
+command!(b"PRG", EnterProgramMode);
+command!(b"EPG", ExitProgramMode);
+command!(b"MDL", GetModelInfo);
 command!(b"VER", GetFirmwareVersion);
+
 command!(b"BLT", GetBacklight);
 command!(
     b"BLT",
@@ -66,3 +93,12 @@ param! {
         KeySquelch => b"KS"
     }
 }
+
+command!(b"BSV", GetBatteryInfo);
+command!(
+    b"BSV",
+    SetBatteryInfo {
+        charge_time: BatteryChargeTime
+    }
+);
+param!(pub range BatteryChargeTime(1..=16));

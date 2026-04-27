@@ -36,7 +36,7 @@ where
 
         for param in item.params() {
             dst.put_u8(b',');
-            dst.extend_from_slice(param.as_bytes());
+            param.write_bytes(dst);
         }
 
         dst.put_u8(b'\r');

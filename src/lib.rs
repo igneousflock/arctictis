@@ -9,7 +9,10 @@ use tokio_util::codec::{AnyDelimiterCodecError, Framed};
 use crate::codec::Codec;
 use crate::codec::command::Command;
 
-pub use crate::codec::command::{Backlight, GetBacklight, GetFirmwareVersion, SetBacklight};
+pub use crate::codec::command::{
+    Backlight, BatteryChargeTime, EnterProgramMode, ExitProgramMode, GetBacklight, GetBatteryInfo,
+    GetFirmwareVersion, GetModelInfo, SetBacklight, SetBatteryInfo,
+};
 
 const VENDOR_ID: u16 = 0x1965;
 const PRODUCT_ID: u16 = 0x0017;
