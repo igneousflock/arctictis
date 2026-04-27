@@ -46,14 +46,14 @@ macro_rules! command {
 }
 
 macro_rules! param {
-    (pub enum $name:ident { $($variant:ident => $val:literal),+ }) => {
+    (pub enum $name:ident { $($variant:ident => $val:literal),+ $(,)? }) => {
         pub enum $name {
             $($variant),+
         }
         impl Param for $name {
             fn write_bytes(&self, dst: &mut tokio_util::bytes::BytesMut) {
                 let s = match self {
-                    $(Self::$variant => $val),+
+                    $(Self::$variant => $val.as_slice()),+
                 };
                 dst.extend_from_slice(s);
             }
@@ -88,15 +88,13 @@ command!(
     }
 );
 
-param! {
-    pub enum Backlight {
-        AlwaysOn => b"AO",
-        AlwaysOff => b"AF",
-        Keypress => b"KY",
-        Squelch => b"SQ",
-        KeySquelch => b"KS"
-    }
-}
+param!(pub enum Backlight {
+    AlwaysOn => b"AO",
+    AlwaysOff => b"AF",
+    Keypress => b"KY",
+    Squelch => b"SQ",
+    KeySquelch => b"KS",
+});
 
 command!(b"BSV", GetBatteryInfo);
 command!(b"BSV", SetBatteryInfo(BatteryChargeTime));
@@ -109,4 +107,21 @@ command!(b"BPL", SetBandPlan(BandPlan));
 param!(pub enum BandPlan {
     Usa => b"0",
     Canada => b"1"
+});
+
+command!(b"KBP", GetKeyBeep);
+command!(
+    b"KBP",
+    SetKeyBeep {
+        beep_level: BeepLevel,
+        key_lock_status: KeyLockStatus
+    }
+);
+param!(pub enum BeepLevel {
+    Auto => b"0",
+    Off => b"99",
+});
+param!(pub enum KeyLockStatus {
+    Off => b"0",
+    On => b"1",
 });

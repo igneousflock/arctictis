@@ -1,7 +1,6 @@
 use uniden::{
-    Backlight, BandPlan, BatteryChargeTime, EnterProgramMode, ExitProgramMode, GetBacklight,
-    GetBandPlan, GetBatteryInfo, GetFirmwareVersion, GetModelInfo, Scanner, SetBacklight,
-    SetBandPlan, SetBatteryInfo,
+    EnterProgramMode, ExitProgramMode, GetFirmwareVersion, GetKeyBeep, GetModelInfo, Scanner,
+    SetKeyBeep,
 };
 
 #[tokio::main]
@@ -11,9 +10,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dbg!(scanner.command(GetFirmwareVersion).await?);
     dbg!(scanner.command(GetModelInfo).await?);
     dbg!(scanner.command(EnterProgramMode).await?);
-    dbg!(scanner.command(GetBandPlan).await?);
-    dbg!(scanner.command(SetBandPlan(BandPlan::Usa)).await?);
-    dbg!(scanner.command(GetBandPlan).await?);
+
+    dbg!(scanner.command(GetKeyBeep).await?);
+    dbg!(
+        scanner
+            .command(SetKeyBeep {
+                beep_level: uniden::BeepLevel::Auto,
+                key_lock_status: uniden::KeyLockStatus::Off
+            })
+            .await?
+    );
+    dbg!(scanner.command(GetKeyBeep).await?);
+
     dbg!(scanner.command(ExitProgramMode).await?);
     Ok(())
 }
