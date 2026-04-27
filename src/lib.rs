@@ -10,8 +10,9 @@ use crate::codec::Codec;
 use crate::codec::command::Command;
 
 pub use crate::codec::command::{
-    Backlight, BatteryChargeTime, EnterProgramMode, ExitProgramMode, GetBacklight, GetBatteryInfo,
-    GetFirmwareVersion, GetModelInfo, SetBacklight, SetBatteryInfo,
+    Backlight, BandPlan, BatteryChargeTime, ClearAllMemory, EnterProgramMode, ExitProgramMode,
+    GetBacklight, GetBandPlan, GetBatteryInfo, GetFirmwareVersion, GetModelInfo, SetBacklight,
+    SetBandPlan, SetBatteryInfo,
 };
 
 const VENDOR_ID: u16 = 0x1965;

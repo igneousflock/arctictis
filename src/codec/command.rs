@@ -14,26 +14,30 @@ pub trait Param {
 
 impl Param for u8 {
     fn write_bytes(&self, dst: &mut tokio_util::bytes::BytesMut) {
-        write!(dst, "{self}").unwrap()
+        write!(dst, "{self}").unwrap();
     }
 }
 
-// TODO: don't require named params
 macro_rules! command {
     ($cmd:literal, $name:ident) => {
         pub struct $name;
         impl Command for $name {
-            fn as_bytes(&self) -> &'static [u8] {
-                $cmd
+            fn as_bytes(&self) -> &'static [u8] { $cmd }
+        }
+    };
+    ($cmd:literal, $name: ident ( $param_ty:ty )) => {
+        pub struct $name(pub $param_ty);
+        impl Command for $name {
+            fn as_bytes(&self) -> &'static [u8] { $cmd }
+            fn params(&self) -> impl IntoIterator<Item = &dyn Param> {
+                [&self.0 as &dyn Param]
             }
         }
     };
     ($cmd:literal, $name: ident { $($param:ident: $param_ty:ty),+ }) => {
         pub struct $name { $(pub $param: $param_ty),+ }
         impl Command for $name {
-            fn as_bytes(&self) -> &'static [u8] {
-                $cmd
-            }
+            fn as_bytes(&self) -> &'static [u8] { $cmd }
             fn params(&self) -> impl IntoIterator<Item = &dyn Param> {
                 [$(&self.$param as &dyn Param),+]
             }
@@ -95,10 +99,14 @@ param! {
 }
 
 command!(b"BSV", GetBatteryInfo);
-command!(
-    b"BSV",
-    SetBatteryInfo {
-        charge_time: BatteryChargeTime
-    }
-);
+command!(b"BSV", SetBatteryInfo(BatteryChargeTime));
 param!(pub range BatteryChargeTime(1..=16));
+
+command!(b"CLR", ClearAllMemory);
+
+command!(b"BPL", GetBandPlan);
+command!(b"BPL", SetBandPlan(BandPlan));
+param!(pub enum BandPlan {
+    Usa => b"0",
+    Canada => b"1"
+});
