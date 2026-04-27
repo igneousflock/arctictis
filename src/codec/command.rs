@@ -1,66 +1,57 @@
-use crate::{
-    KeyBeepSettings, PriorityMode,
-    codec::misc::{Backlight, BandPlan},
-};
+pub trait Command {
+    fn as_bytes(&self) -> &'static [u8];
+    fn params(&self) -> impl IntoIterator<Item = &dyn Param> {
+        []
+    }
+}
 
-#[derive(Clone, Copy, Debug, strum::IntoStaticStr)]
-#[strum(serialize_all = "UPPERCASE")]
-pub enum Command {
-    // Program control mode
-    /// Enter program mode
-    Prg,
-    /// Exit program mode
-    Epg,
+pub trait Param {
+    fn as_bytes(&self) -> &[u8];
+}
 
-    // System information
-    /// Get model info
-    Mdl,
-    /// Get firmware version
-    Ver,
+pub struct GetFirmwareVersion;
+impl Command for GetFirmwareVersion {
+    fn as_bytes(&self) -> &'static [u8] {
+        b"VER"
+    }
+}
 
-    // System settings
-    /// Get/set backlight trigger event
-    Blt(Option<Backlight>),
-    /// Get/set battery charge time
-    Bsv(Option<u8>),
-    /// Clear all memory
-    ///
-    /// Takes about 20 seconds to execute
-    Clr,
-    /// Get/set band plan
-    ///
-    /// Affects frequency step. Issue before frequency programming.
-    Bpl(Option<BandPlan>),
-    /// Get/set key beep
-    Kbp(Option<KeyBeepSettings>), // TODO: optional param
-    /// Get/set priority mode
-    Pri(Option<PriorityMode>), // TODO: optional param
+pub struct GetBacklight;
+impl Command for GetBacklight {
+    fn as_bytes(&self) -> &'static [u8] {
+        b"BLT"
+    }
+}
 
-    // Scan Settings
-    // Scg,
-    // Dch,
-    // Cin,
+pub struct SetBacklight(Backlight);
 
-    // Search/close call settings
-    // Sco
-    // Glf
-    // Ulf
-    // Lof
-    // Clc
+impl Command for SetBacklight {
+    fn as_bytes(&self) -> &'static [u8] {
+        b"BLT"
+    }
 
-    // Service/custom search settings
-    // Ssg
-    // Csg
-    // Csp
+    fn params(&self) -> impl IntoIterator<Item = &dyn Param> {
+        [&self.0 as &dyn Param]
+    }
+}
 
-    // Wxs
-    // Cnt
-    // Vol
-    // Sql
+#[derive(Clone, Copy, Debug)]
+pub enum Backlight {
+    AlwaysOn,
+    AlwaysOff,
+    Keypress,
+    Squelch,
+    KeySquelch,
+}
 
-    // undocumented?
-    /// Power OFF
-    Pof,
-    /// Get status
-    Sts,
+impl Param for Backlight {
+    fn as_bytes(&self) -> &[u8] {
+        match self {
+            Self::AlwaysOn => b"AO",
+            Self::AlwaysOff => b"AF",
+            Self::Keypress => b"KY",
+            Self::Squelch => b"SQ",
+            Self::KeySquelch => b"KS",
+        }
+    }
 }

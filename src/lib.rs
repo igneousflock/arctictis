@@ -7,8 +7,9 @@ use tokio_serial::{SerialPortBuilderExt, SerialPortType, SerialStream};
 use tokio_util::codec::{AnyDelimiterCodecError, Framed};
 
 use crate::codec::Codec;
+use crate::codec::command::Command;
 
-pub use crate::codec::{Backlight, Command, KeyBeepLevel, KeyBeepSettings, PriorityMode};
+pub use crate::codec::command::{Backlight, GetBacklight, GetFirmwareVersion, SetBacklight};
 
 const VENDOR_ID: u16 = 0x1965;
 const PRODUCT_ID: u16 = 0x0017;
@@ -61,13 +62,12 @@ impl Scanner {
         Ok(r)
     }
 
-    pub async fn command(&mut self, cmd: Command) -> Result<String, Error> {
+    pub async fn command<T>(&mut self, cmd: T) -> Result<String, Error>
+    where
+        T: Command,
+    {
         self.0.send(cmd).await?;
         let r = self.0.next().await.ok_or(Error::PortClosed)??;
         Ok(r)
-    }
-
-    pub async fn firmware_version(&mut self) -> Result<String, Error> {
-        self.command(Command::Ver).await
     }
 }

@@ -1,13 +1,9 @@
-mod command;
-mod misc;
-
-use std::fmt::Write;
+pub mod command;
 
 use bytes::BufMut;
 use tokio_util::codec::{AnyDelimiterCodec, Decoder, Encoder};
 
-pub use command::Command;
-pub use misc::{Backlight, KeyBeepLevel, KeyBeepSettings, PriorityMode};
+use command::Command;
 
 #[derive(Clone, Debug)]
 pub struct Codec {
@@ -25,53 +21,25 @@ impl Codec {
     }
 }
 
-impl Encoder<Command> for Codec {
+impl<T> Encoder<T> for Codec
+where
+    T: Command,
+{
     type Error = std::io::Error;
 
     fn encode(
         &mut self,
-        item: Command,
+        item: T,
         dst: &mut tokio_util::bytes::BytesMut,
     ) -> Result<(), Self::Error> {
-        dst.reserve(4); // 3 chars for command, one for return code
+        dst.extend_from_slice(item.as_bytes());
 
-        let cmd: &'static str = item.into();
-        dst.extend_from_slice(cmd.as_bytes());
-
-        match item {
-            Command::Blt(Some(backlight)) => {
-                let backlight: &'static str = backlight.into();
-                dst.reserve(1 + backlight.len()); // 1 for the comma, the rest for the arg
-                dst.put_u8(b',');
-                dst.extend_from_slice(backlight.as_bytes())
-            }
-            Command::Bsv(Some(battery_save)) => {
-                dst.reserve(2);
-                /*
-                if battery_save {
-                    dst.extend_from_slice(b",1");
-                } else {
-                    dst.extend_from_slice(b",0");
-                }
-                */
-                write!(dst, ",{battery_save}").unwrap();
-            }
-            Command::Kbp(Some(key_beep_settings)) => {
-                let beep_level: &'static str = key_beep_settings.beep_level.into();
-                write!(dst, ",{beep_level}").unwrap();
-                let key_lock = if key_beep_settings.lock_status {
-                    "1"
-                } else {
-                    "0"
-                };
-                write!(dst, ",{key_lock}").unwrap();
-            }
-            _ => (),
+        for param in item.params() {
+            dst.put_u8(b',');
+            dst.extend_from_slice(param.as_bytes());
         }
 
         dst.put_u8(b'\r');
-
-        // dbg!(String::from_utf8_lossy(dst));
 
         Ok(())
     }
