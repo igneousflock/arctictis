@@ -1,4 +1,10 @@
-pub trait Command: Send + Sync + Clone + std::fmt::Debug {
+mod private {
+    pub trait Sealed {}
+}
+
+pub trait Command:
+    private::Sealed + Send + Sync + Clone + std::fmt::Display + std::fmt::Debug
+{
     fn as_bytes(&self) -> &'static [u8];
 
     fn params(&self) -> impl IntoIterator<Item = &dyn Param> {
@@ -6,10 +12,11 @@ pub trait Command: Send + Sync + Clone + std::fmt::Debug {
     }
 }
 
-pub trait Param {
+pub trait Param: private::Sealed + Send + Sync + std::fmt::Debug {
     fn write_bytes(&self, dst: &mut tokio_util::bytes::BytesMut);
 }
 
+impl private::Sealed for u8 {}
 impl Param for u8 {
     fn write_bytes(&self, dst: &mut tokio_util::bytes::BytesMut) {
         let mut buff = itoa::Buffer::new();
@@ -21,6 +28,9 @@ macro_rules! command {
     ($cmd:literal, $name:ident) => {
         #[derive(Clone, Debug)]
         pub struct $name;
+
+        command!(@traits $cmd, $name);
+
         impl Command for $name {
             fn as_bytes(&self) -> &'static [u8] { $cmd }
         }
@@ -28,6 +38,9 @@ macro_rules! command {
     ($cmd:literal, $name: ident ( $param_ty:ty )) => {
         #[derive(Clone, Debug)]
         pub struct $name(pub $param_ty);
+
+        command!(@traits $cmd, $name);
+
         impl Command for $name {
             fn as_bytes(&self) -> &'static [u8] { $cmd }
             fn params(&self) -> impl IntoIterator<Item = &dyn Param> {
@@ -38,10 +51,21 @@ macro_rules! command {
     ($cmd:literal, $name: ident { $($param:ident: $param_ty:ty),+ }) => {
         #[derive(Clone, Debug)]
         pub struct $name { $(pub $param: $param_ty),+ }
+
+        command!(@traits $cmd, $name);
+
         impl Command for $name {
             fn as_bytes(&self) -> &'static [u8] { $cmd }
             fn params(&self) -> impl IntoIterator<Item = &dyn Param> {
                 [$(&self.$param as &dyn Param),+]
+            }
+        }
+    };
+    (@traits $cmd:literal, $name:ident) => {
+        impl private::Sealed for $name {}
+        impl std::fmt::Display for $name {
+            fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+                String::from_utf8_lossy($cmd).fmt(f)
             }
         }
     };
@@ -53,6 +77,9 @@ macro_rules! param {
         pub enum $name {
             $($variant),+
         }
+
+        param!(@traits $name);
+
         impl Param for $name {
             fn write_bytes(&self, dst: &mut tokio_util::bytes::BytesMut) {
                 let s = match self {
@@ -65,6 +92,9 @@ macro_rules! param {
     (pub range $name:ident ($range:expr)) => {
         #[derive(Clone, Debug)]
         pub struct $name(u8);
+
+        param!(@traits $name);
+
         impl $name {
             pub fn new(value: u8) -> Self {
                 assert!($range.contains(&value));
@@ -77,6 +107,9 @@ macro_rules! param {
             }
         }
     };
+    (@traits $name:ident) => {
+        impl private::Sealed for $name {}
+    };
 }
 
 command!(b"PRG", EnterProgramMode);
@@ -85,13 +118,7 @@ command!(b"MDL", GetModelInfo);
 command!(b"VER", GetFirmwareVersion);
 
 command!(b"BLT", GetBacklight);
-command!(
-    b"BLT",
-    SetBacklight {
-        backlight: Backlight
-    }
-);
-
+command!(b"BLT", SetBacklight(Backlight));
 param!(pub enum Backlight {
     AlwaysOn => b"AO",
     AlwaysOff => b"AF",

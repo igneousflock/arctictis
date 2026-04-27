@@ -1,4 +1,7 @@
-use uniden::{Command, GetFirmwareVersion, GetModelInfo, Scanner};
+use arctictis::{
+    Command, Scanner,
+    command::{GetFirmwareVersion, GetModelInfo},
+};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -14,7 +17,8 @@ async fn print_response<T>(scanner: &mut Scanner, cmd: T) -> Result<(), Box<dyn 
 where
     T: Command,
 {
+    let name = cmd.to_string();
     let r = scanner.command(cmd.clone()).await?;
-    println!("{} => {r:#?}", String::from_utf8_lossy(cmd.as_bytes()));
+    println!("{name} => {r:#?}");
     Ok(())
 }
