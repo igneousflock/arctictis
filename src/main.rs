@@ -1,4 +1,4 @@
-use uniden::{Backlight, Command, Scanner};
+use uniden::{Command, KeyBeepLevel, KeyBeepSettings, Scanner};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -7,13 +7,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dbg!(scanner.firmware_version().await?);
     dbg!(scanner.command(Command::Prg).await?);
     // tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
-    dbg!(scanner.command(Command::Blt(None)).await?);
     dbg!(
         scanner
-            .command(Command::Blt(Some(Backlight::KeySql)))
+            .command(Command::Kbp(Some(KeyBeepSettings {
+                beep_level: KeyBeepLevel::Auto,
+                lock_status: false,
+            })))
             .await?
     );
-    dbg!(scanner.command(Command::Blt(None)).await?);
+    dbg!(scanner.command(Command::Kbp(None)).await?);
     dbg!(scanner.command(Command::Epg).await?);
     Ok(())
 }

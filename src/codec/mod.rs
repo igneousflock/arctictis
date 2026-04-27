@@ -7,7 +7,7 @@ use bytes::BufMut;
 use tokio_util::codec::{AnyDelimiterCodec, Decoder, Encoder};
 
 pub use command::Command;
-pub use misc::Backlight;
+pub use misc::{Backlight, KeyBeepLevel, KeyBeepSettings, PriorityMode};
 
 #[derive(Clone, Debug)]
 pub struct Codec {
@@ -55,6 +55,16 @@ impl Encoder<Command> for Codec {
                 }
                 */
                 write!(dst, ",{battery_save}").unwrap();
+            }
+            Command::Kbp(Some(key_beep_settings)) => {
+                let beep_level: &'static str = key_beep_settings.beep_level.into();
+                write!(dst, ",{beep_level}").unwrap();
+                let key_lock = if key_beep_settings.lock_status {
+                    "1"
+                } else {
+                    "0"
+                };
+                write!(dst, ",{key_lock}").unwrap();
             }
             _ => (),
         }

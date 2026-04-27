@@ -8,7 +8,7 @@ use tokio_util::codec::{AnyDelimiterCodecError, Framed};
 
 use crate::codec::Codec;
 
-pub use crate::codec::{Backlight, Command};
+pub use crate::codec::{Backlight, Command, KeyBeepLevel, KeyBeepSettings, PriorityMode};
 
 const VENDOR_ID: u16 = 0x1965;
 const PRODUCT_ID: u16 = 0x0017;

@@ -1,4 +1,7 @@
-use crate::codec::misc::Backlight;
+use crate::{
+    KeyBeepSettings, PriorityMode,
+    codec::misc::{Backlight, BandPlan},
+};
 
 #[derive(Clone, Copy, Debug, strum::IntoStaticStr)]
 #[strum(serialize_all = "UPPERCASE")]
@@ -16,20 +19,22 @@ pub enum Command {
     Ver,
 
     // System settings
-    /// Get/set backlight
+    /// Get/set backlight trigger event
     Blt(Option<Backlight>),
-    /// Get/set battery save
+    /// Get/set battery charge time
     Bsv(Option<u8>),
     /// Clear all memory
     ///
     /// Takes about 20 seconds to execute
     Clr,
     /// Get/set band plan
-    Bpl,
+    ///
+    /// Affects frequency step. Issue before frequency programming.
+    Bpl(Option<BandPlan>),
     /// Get/set key beep
-    Kbp, // TODO: optional param
+    Kbp(Option<KeyBeepSettings>), // TODO: optional param
     /// Get/set priority mode
-    Pri, // TODO: optional param
+    Pri(Option<PriorityMode>), // TODO: optional param
 
     // Scan Settings
     // Scg,
