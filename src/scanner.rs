@@ -2,9 +2,12 @@ use std::time::Duration;
 
 use futures_util::{SinkExt, StreamExt};
 use tokio_serial::{SerialPortBuilderExt, SerialPortType, SerialStream};
-use tokio_util::codec::{AnyDelimiterCodecError, Framed};
+use tokio_util::codec::Framed;
 
-use crate::{codec::Codec, command::Command};
+use crate::{
+    codec::{Codec, DecoderError, ResponseError},
+    command::{Command, Response},
+};
 
 const VENDOR_ID: u16 = 0x1965;
 const PRODUCT_ID: u16 = 0x0017;
@@ -18,13 +21,22 @@ pub enum ScannerError {
     ScannerNotFound,
 
     #[error(transparent)]
-    Codec(#[from] AnyDelimiterCodecError),
-
-    #[error(transparent)]
     Io(#[from] std::io::Error),
 
     #[error(transparent)]
     Serial(#[from] tokio_serial::Error),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum EncodingError<E> {
+    #[error(transparent)]
+    Scanner(#[from] ScannerError),
+
+    #[error(transparent)]
+    Decoder(#[from] DecoderError),
+
+    #[error(transparent)]
+    ResponseParserError(#[from] ResponseError<E>),
 }
 
 #[derive(Debug)]
@@ -52,17 +64,16 @@ impl Scanner {
         Ok(Self(framed))
     }
 
-    pub async fn response(&mut self) -> Result<String, ScannerError> {
-        let r = self.0.next().await.ok_or(ScannerError::PortClosed)??;
-        Ok(r)
-    }
-
-    pub async fn command<T>(&mut self, cmd: T) -> Result<String, ScannerError>
+    pub async fn command<'p, Cmd>(
+        &mut self,
+        cmd: Cmd,
+    ) -> Result<Cmd::Response, EncodingError<<Cmd::Response as Response>::Error>>
     where
-        T: Command,
+        Cmd: Command<'p>,
     {
-        self.0.send(cmd).await?;
-        let r = self.0.next().await.ok_or(ScannerError::PortClosed)??;
-        Ok(r)
+        self.0.send(cmd).await.map_err(ScannerError::from)?;
+        let raw_response = self.0.next().await.ok_or(ScannerError::PortClosed)??;
+        let response = raw_response.parse::<Cmd>()?;
+        Ok(response)
     }
 }
