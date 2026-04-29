@@ -1,7 +1,10 @@
-use bytes::{Buf, BufMut, Bytes};
+use bytes::{BufMut, Bytes};
 use tokio_util::codec::{AnyDelimiterCodec, AnyDelimiterCodecError, Decoder, Encoder};
 
-use crate::command::{Command, ParamSet, Response};
+use crate::{
+    bytes_split::BytesSplit,
+    command::{Command, ParamSet, Response},
+};
 
 #[derive(Clone, Debug)]
 pub struct Codec {
@@ -114,62 +117,5 @@ impl Decoder for Codec {
         let raw_values = all_fields.collect::<Vec<_>>();
 
         Ok(Some(RawResponse { cmd, raw_values }))
-    }
-}
-
-struct BytesSplit(Bytes, u8);
-
-impl BytesSplit {
-    fn new(inner: Bytes, split_at: u8) -> Self {
-        Self(inner, split_at)
-    }
-}
-
-impl Iterator for BytesSplit {
-    type Item = Bytes;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.0.is_empty() {
-            return None;
-        }
-
-        // find the index of the first delimiter
-        let Some(i) = self
-            .0
-            .iter()
-            .enumerate()
-            .find_map(|(i, b)| (*b == self.1).then_some(i))
-        else {
-            // we're on the last element
-            let last_elem = self.0.clone();
-            self.0.clear();
-            return Some(last_elem);
-        };
-
-        // extract the element
-        let elem = self.0.split_to(i);
-        // remove the comma
-        self.0.advance(1);
-
-        Some(elem)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #![allow(clippy::unwrap_used)]
-
-    use super::*;
-    use bytes::Bytes;
-
-    #[test]
-    fn split_works() {
-        let bytes = Bytes::from(b"foo,bar,baz".as_slice());
-        let mut split = BytesSplit::new(bytes, b',');
-
-        assert_eq!(split.next().unwrap().as_ref(), b"foo");
-        assert_eq!(split.next().unwrap().as_ref(), b"bar");
-        assert_eq!(split.next().unwrap().as_ref(), b"baz");
-        assert_eq!(split.next(), None);
     }
 }
