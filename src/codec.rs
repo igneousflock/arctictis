@@ -1,4 +1,4 @@
-use bytes::{BufMut, Bytes};
+use bytes::{Buf, BufMut, Bytes};
 use tokio_util::codec::{AnyDelimiterCodec, AnyDelimiterCodecError, Decoder, Encoder};
 
 use crate::command::{Command, ParamSet, Response};
@@ -149,7 +149,7 @@ impl Iterator for BytesSplit {
         // extract the element
         let elem = self.0.split_to(i);
         // remove the comma
-        self.0 = self.0.slice(1..);
+        self.0.advance(1);
 
         Some(elem)
     }
