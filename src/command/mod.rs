@@ -1,11 +1,12 @@
 pub mod bc125at;
-mod no_params;
-mod ok_response;
+#[macro_use]
+mod macros;
+pub mod no_params;
+pub mod ok_response;
 
 use bytes::{Bytes, BytesMut};
 
-pub(crate) use no_params::NoParams;
-pub(crate) use ok_response::OkResponse;
+pub(crate) use macros::command;
 
 pub trait Command<'p> {
     const TEXT: &'static [u8];

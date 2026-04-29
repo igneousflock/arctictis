@@ -1,19 +1,12 @@
 use std::str::Utf8Error;
 
-use crate::command::{Command, NoParams, OkResponse, Response};
+use crate::{
+    NoParams, OkResponse,
+    command::{Command, Response, command},
+};
 
-#[derive(Debug)]
-pub struct EnterProgramMode;
-
-impl Command<'static> for EnterProgramMode {
-    const TEXT: &'static [u8] = b"EPG";
-    type Params = NoParams;
-    type Response = OkResponse;
-
-    fn param_set(&self) -> Self::Params {
-        NoParams
-    }
-}
+command!(b"PRG": EnterProgramMode);
+command!(b"EPG": ExitProgramMode);
 
 #[derive(Debug, thiserror::Error)]
 pub enum FirmwareVersionError {
@@ -36,14 +29,4 @@ impl Response for FirmwareVersion {
     }
 }
 
-pub struct GetFirmwareVersion;
-
-impl Command<'static> for GetFirmwareVersion {
-    const TEXT: &'static [u8] = b"VER";
-    type Params = NoParams;
-    type Response = FirmwareVersion;
-
-    fn param_set(&self) -> Self::Params {
-        NoParams
-    }
-}
+command!(b"VER": GetFirmwareVersion => FirmwareVersion);
