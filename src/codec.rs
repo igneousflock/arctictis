@@ -41,7 +41,7 @@ where
 
         for param in item.param_set() {
             dst.put_u8(PARAM_DELIMITER);
-            param.write_bytes(dst);
+            param.serialize_to(dst);
         }
 
         dst.put_u8(b'\r');

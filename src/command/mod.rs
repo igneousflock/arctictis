@@ -21,7 +21,7 @@ pub trait ParamSet<'p>: IntoIterator<Item = &'p dyn Param> {
 }
 
 pub trait Param {
-    fn write_bytes(&self, dst: &mut BytesMut);
+    fn serialize_to(&self, dst: &mut BytesMut);
 }
 
 pub trait Response: Sized {
