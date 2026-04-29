@@ -26,7 +26,7 @@ pub struct FirmwareVersion(pub String);
 
 impl Response for FirmwareVersion {
     type Error = FirmwareVersionError;
-    fn parse_from_values(raw_values: &[bytes::Bytes]) -> Result<Self, Self::Error> {
+    fn deserialize(raw_values: &[bytes::Bytes]) -> Result<Self, Self::Error> {
         let version = str::from_utf8(&raw_values[0])?.to_string();
         Ok(Self(version))
     }

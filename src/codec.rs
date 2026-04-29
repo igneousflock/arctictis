@@ -62,7 +62,7 @@ pub struct RawResponse {
 }
 
 impl RawResponse {
-    pub fn parse<'p, Cmd>(
+    pub fn deserialize<'p, Cmd>(
         &self,
     ) -> Result<Cmd::Response, ResponseError<<Cmd::Response as Response>::Error>>
     where
@@ -75,7 +75,7 @@ impl RawResponse {
             return Err(ResponseError::WrongNumberOfFields);
         }
 
-        let response = Cmd::Response::parse_from_values(&self.raw_values)?;
+        let response = Cmd::Response::deserialize(&self.raw_values)?;
 
         Ok(response)
     }

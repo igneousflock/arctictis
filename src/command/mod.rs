@@ -27,7 +27,7 @@ pub trait Param {
 pub trait Response: Sized {
     type Error: std::error::Error;
 
-    fn parse_from_values(raw_values: &[Bytes]) -> Result<Self, Self::Error>;
+    fn deserialize(raw_values: &[Bytes]) -> Result<Self, Self::Error>;
 
     fn expected_field_count() -> usize;
 }

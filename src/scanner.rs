@@ -73,7 +73,7 @@ impl Scanner {
     {
         self.0.send(cmd).await.map_err(ScannerError::from)?;
         let raw_response = self.0.next().await.ok_or(ScannerError::PortClosed)??;
-        let response = raw_response.parse::<Cmd>()?;
+        let response = raw_response.deserialize::<Cmd>()?;
         Ok(response)
     }
 }
