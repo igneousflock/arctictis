@@ -19,8 +19,6 @@ impl Command<'static> for EnterProgramMode {
 pub enum FirmwareVersionError {
     #[error("invalid UTF-8 bytes")]
     Utf8Error(#[from] Utf8Error),
-    #[error("expected one response field")]
-    WrongNumberOfFields,
 }
 
 #[derive(Debug)]
@@ -28,20 +26,13 @@ pub struct FirmwareVersion(pub String);
 
 impl Response for FirmwareVersion {
     type Error = FirmwareVersionError;
-    fn parse_from_values<'f>(
-        mut raw_values: impl Iterator<Item = &'f [u8]>,
-    ) -> Result<Self, Self::Error> {
-        let bytes = raw_values
-            .next()
-            .ok_or(FirmwareVersionError::WrongNumberOfFields)?;
+    fn parse_from_values(raw_values: &[bytes::Bytes]) -> Result<Self, Self::Error> {
+        let version = str::from_utf8(&raw_values[0])?.to_string();
+        Ok(Self(version))
+    }
 
-        let version = str::from_utf8(bytes)?;
-
-        if raw_values.next().is_some() {
-            return Err(FirmwareVersionError::WrongNumberOfFields);
-        }
-
-        Ok(Self(version.to_string()))
+    fn expected_field_count() -> usize {
+        1
     }
 }
 

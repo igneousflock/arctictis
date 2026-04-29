@@ -2,7 +2,7 @@ pub mod bc125at;
 mod no_params;
 mod ok_response;
 
-use bytes::BytesMut;
+use bytes::{Bytes, BytesMut};
 
 pub(crate) use no_params::NoParams;
 pub(crate) use ok_response::OkResponse;
@@ -27,7 +27,7 @@ pub trait Param {
 pub trait Response: Sized {
     type Error: std::error::Error;
 
-    fn parse_from_values<'f>(
-        raw_values: impl Iterator<Item = &'f [u8]>,
-    ) -> Result<Self, Self::Error>;
+    fn parse_from_values(raw_values: &[Bytes]) -> Result<Self, Self::Error>;
+
+    fn expected_field_count() -> usize;
 }

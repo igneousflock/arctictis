@@ -1,4 +1,4 @@
-use bytes::BufMut;
+use bytes::{BufMut, Bytes};
 use tokio_util::codec::{AnyDelimiterCodec, AnyDelimiterCodecError, Decoder, Encoder};
 
 use crate::command::{Command, ParamSet, Response};
@@ -49,13 +49,16 @@ pub enum ResponseError<E> {
     #[error("response is for wrong command")]
     WrongCommand,
 
+    #[error("unexpected number of fields")]
+    WrongNumberOfFields,
+
     #[error(transparent)]
     InvalidFields(#[from] E),
 }
 
 pub struct RawResponse {
-    cmd: Vec<u8>,
-    raw_values: Vec<u8>,
+    cmd: Bytes,
+    raw_values: Vec<Bytes>,
 }
 
 impl RawResponse {
@@ -68,8 +71,11 @@ impl RawResponse {
         if self.cmd != Cmd::TEXT {
             return Err(ResponseError::WrongCommand);
         }
+        if self.raw_values.len() != Cmd::Response::expected_field_count() {
+            return Err(ResponseError::WrongNumberOfFields);
+        }
 
-        let response = Cmd::Response::parse_from_values(self.raw_values.split(|b| *b == b','))?;
+        let response = Cmd::Response::parse_from_values(&self.raw_values)?;
 
         Ok(response)
     }
@@ -99,14 +105,71 @@ impl Decoder for Codec {
             return Ok(None);
         };
 
-        let mut fields = output.split(|b| *b == b',');
-        let Some(cmd) = fields.next() else {
+        let mut all_fields = BytesSplit::new(output, b',');
+
+        let Some(cmd) = all_fields.next() else {
             return Err(DecoderError::Malformed);
         };
 
-        Ok(Some(RawResponse {
-            cmd: cmd.to_owned(),
-            raw_values: output[4..].to_owned(),
-        }))
+        let raw_values = all_fields.collect::<Vec<_>>();
+
+        Ok(Some(RawResponse { cmd, raw_values }))
+    }
+}
+
+struct BytesSplit(Bytes, u8);
+
+impl BytesSplit {
+    fn new(inner: Bytes, split_at: u8) -> Self {
+        Self(inner, split_at)
+    }
+}
+
+impl Iterator for BytesSplit {
+    type Item = Bytes;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.0.is_empty() {
+            return None;
+        }
+
+        // find the index of the first delimiter
+        let Some(i) = self
+            .0
+            .iter()
+            .enumerate()
+            .find_map(|(i, b)| (*b == self.1).then_some(i))
+        else {
+            // we're on the last element
+            let last_elem = self.0.clone();
+            self.0.clear();
+            return Some(last_elem);
+        };
+
+        // extract the element
+        let elem = self.0.split_to(i);
+        // remove the comma
+        self.0 = self.0.slice(1..);
+
+        Some(elem)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #![allow(clippy::unwrap_used)]
+
+    use super::*;
+    use bytes::Bytes;
+
+    #[test]
+    fn split_works() {
+        let bytes = Bytes::from(b"foo,bar,baz".as_slice());
+        let mut split = BytesSplit::new(bytes, b',');
+
+        assert_eq!(split.next().unwrap().as_ref(), b"foo");
+        assert_eq!(split.next().unwrap().as_ref(), b"bar");
+        assert_eq!(split.next().unwrap().as_ref(), b"baz");
+        assert_eq!(split.next(), None);
     }
 }
