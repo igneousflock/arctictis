@@ -6,6 +6,9 @@ use crate::{
     command::{Command, ParamSet, Response},
 };
 
+const RETURN_CODE: u8 = b'\r';
+const PARAM_DELIMITER: u8 = b',';
+
 #[derive(Clone, Debug)]
 pub struct Codec {
     decoder: AnyDelimiterCodec,
@@ -14,7 +17,7 @@ pub struct Codec {
 impl Codec {
     pub fn new() -> Self {
         Self {
-            decoder: AnyDelimiterCodec::new(b"\r".to_vec(), b"\r".to_vec()),
+            decoder: AnyDelimiterCodec::new(vec![RETURN_CODE], vec![RETURN_CODE]),
         }
     }
 }
@@ -37,7 +40,7 @@ where
         dst.extend_from_slice(Cmd::TEXT);
 
         for param in item.param_set() {
-            dst.put_u8(b',');
+            dst.put_u8(PARAM_DELIMITER);
             param.write_bytes(dst);
         }
 
@@ -108,7 +111,7 @@ impl Decoder for Codec {
             return Ok(None);
         };
 
-        let mut all_fields = BytesSplit::new(output, b',');
+        let mut all_fields = BytesSplit::new(output, PARAM_DELIMITER);
 
         let Some(cmd) = all_fields.next() else {
             return Err(DecoderError::Malformed);
