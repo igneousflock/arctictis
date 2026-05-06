@@ -3,7 +3,7 @@ use tokio_util::codec::{AnyDelimiterCodec, AnyDelimiterCodecError, Decoder, Enco
 
 use crate::{
     bytes_split::BytesSplit,
-    command::{Command, ParamSet, Response},
+    command::{Command, ParamBuffer, Params, Response},
 };
 
 const RETURN_CODE: u8 = b'\r';
@@ -22,9 +22,9 @@ impl Codec {
     }
 }
 
-impl<'p, Cmd> Encoder<Cmd> for Codec
+impl<Cmd> Encoder<Cmd> for Codec
 where
-    Cmd: Command<'p>,
+    Cmd: Command,
 {
     type Error = std::io::Error;
 
@@ -33,16 +33,12 @@ where
         item: Cmd,
         dst: &mut tokio_util::bytes::BytesMut,
     ) -> Result<(), Self::Error> {
-        let params = item.param_set();
-        let est_len = Cmd::TEXT.len() + params.count() + params.size() + 1;
+        let params = item.params();
+        let est_len = Cmd::TEXT.len() + params.count() + params.total_size() + 1;
         dst.reserve(est_len);
 
         dst.extend_from_slice(Cmd::TEXT);
-
-        for param in item.param_set() {
-            dst.put_u8(PARAM_DELIMITER);
-            param.serialize_to(dst);
-        }
+        params.serialize_to(ParamBuffer::new(dst));
 
         dst.put_u8(b'\r');
 
@@ -68,12 +64,9 @@ pub struct RawResponse {
 }
 
 impl RawResponse {
-    pub fn deserialize<'p, Cmd>(
+    pub fn deserialize<Cmd: Command>(
         &self,
-    ) -> Result<Cmd::Response, ResponseError<<Cmd::Response as Response>::Error>>
-    where
-        Cmd: Command<'p>,
-    {
+    ) -> Result<Cmd::Response, ResponseError<<Cmd::Response as Response>::Error>> {
         if self.cmd != Cmd::TEXT {
             return Err(ResponseError::WrongCommand);
         }

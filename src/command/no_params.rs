@@ -1,22 +1,17 @@
-use crate::command::{Param, ParamSet};
+use crate::command::{ParamBuffer, Params};
 
 pub struct NoParams;
 
-impl IntoIterator for NoParams {
-    type Item = &'static dyn Param;
-    type IntoIter = std::iter::Empty<Self::Item>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        std::iter::empty()
-    }
-}
-
-impl ParamSet<'static> for NoParams {
+impl Params for NoParams {
     fn count(&self) -> usize {
         0
     }
 
-    fn size(&self) -> usize {
+    fn total_size(&self) -> usize {
         0
+    }
+
+    fn serialize_to(&self, _buffer: ParamBuffer) {
+        /* noop */
     }
 }

@@ -64,13 +64,10 @@ impl Scanner {
         Ok(Self(framed))
     }
 
-    pub async fn command<'p, Cmd>(
+    pub async fn command<Cmd: Command>(
         &mut self,
         cmd: Cmd,
-    ) -> Result<Cmd::Response, EncodingError<<Cmd::Response as Response>::Error>>
-    where
-        Cmd: Command<'p>,
-    {
+    ) -> Result<Cmd::Response, EncodingError<<Cmd::Response as Response>::Error>> {
         self.0.send(cmd).await.map_err(ScannerError::from)?;
         let raw_response = self.0.next().await.ok_or(ScannerError::PortClosed)??;
         let response = raw_response.deserialize::<Cmd>()?;

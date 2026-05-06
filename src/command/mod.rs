@@ -1,28 +1,21 @@
 pub mod bc125at;
 #[macro_use]
 mod macros;
-pub mod no_params;
-pub mod ok_response;
+mod no_params;
+mod ok_response;
 
-use bytes::{Bytes, BytesMut};
+use bytes::{BufMut, Bytes, BytesMut};
 
 pub(crate) use macros::command;
+pub(crate) use no_params::NoParams;
+pub use ok_response::{OkResponse, OkResponseError};
 
-pub trait Command<'p> {
+pub trait Command {
     const TEXT: &'static [u8];
-    type Params: ParamSet<'p>;
+    type Params: Params;
     type Response: Response;
 
-    fn param_set(&self) -> Self::Params;
-}
-
-pub trait ParamSet<'p>: IntoIterator<Item = &'p dyn Param> {
-    fn count(&self) -> usize;
-    fn size(&self) -> usize;
-}
-
-pub trait Param {
-    fn serialize_to(&self, dst: &mut BytesMut);
+    fn params(&self) -> &Self::Params;
 }
 
 pub trait Response: Sized {
@@ -31,4 +24,23 @@ pub trait Response: Sized {
     fn deserialize(raw_values: &[Bytes]) -> Result<Self, Self::Error>;
 
     fn expected_field_count() -> usize;
+}
+
+pub trait Params {
+    fn count(&self) -> usize;
+    fn total_size(&self) -> usize;
+    fn serialize_to(&self, buffer: ParamBuffer);
+}
+
+pub struct ParamBuffer<'a>(&'a mut BytesMut);
+
+impl<'a> ParamBuffer<'a> {
+    pub fn new(bytes: &'a mut BytesMut) -> Self {
+        Self(bytes)
+    }
+
+    fn serialize_param(&mut self, bytes: &[u8]) {
+        self.0.put_u8(b',');
+        self.0.extend_from_slice(bytes);
+    }
 }

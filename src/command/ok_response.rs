@@ -8,6 +8,7 @@ pub enum OkResponseError {
     WrongNumberOfFields,
 }
 
+#[derive(Clone, Copy, Debug)]
 pub struct OkResponse;
 
 impl Response for OkResponse {

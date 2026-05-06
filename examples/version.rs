@@ -14,11 +14,11 @@ async fn print_response<Cmd>(
     cmd: Cmd,
 ) -> Result<(), Box<dyn std::error::Error>>
 where
-    Cmd: Command<'static> + 'static,
+    Cmd: Command + 'static,
     Cmd::Response: std::fmt::Debug,
 {
     let name = String::from_utf8_lossy(Cmd::TEXT);
     let r = scanner.command(cmd).await?;
-    println!("{name} => {r:#?}");
+    println!("{name} => {r:?}");
     Ok(())
 }
