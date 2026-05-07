@@ -5,6 +5,6 @@ mod scanner;
 
 pub use crate::{
     codec::{DecoderError, ResponseError},
-    command::{Command, OkResponse, OkResponseError, Params, Response, bc125at},
+    command::{Command, OkResponse, OkResponseError, bc125at},
     scanner::{EncodingError, Scanner, ScannerError},
 };
