@@ -1,6 +1,6 @@
 use std::{num::ParseIntError, str::Utf8Error};
 
-use crate::command::{Command, NoParams, OkResponse, Params, Response, command};
+use crate::command::{OkResponse, Params, Response, command};
 
 use super::ParamBuffer;
 
