@@ -4,6 +4,7 @@ mod command;
 mod scanner;
 
 pub use crate::{
+    codec::{DecoderError, ResponseError},
     command::{Command, OkResponse, OkResponseError, Params, Response, bc125at},
-    scanner::{Scanner, ScannerError},
+    scanner::{EncodingError, Scanner, ScannerError},
 };
