@@ -1,10 +1,14 @@
-use arctictis::{Command, Scanner, bc125at::GetFirmwareVersion};
+use arctictis::{
+    Command, Scanner,
+    bc125at::{GetFirmwareVersion, GetModelInfo},
+};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut scanner = Scanner::open()?;
     println!("{scanner:#?}");
     print_response(&mut scanner, GetFirmwareVersion).await?;
+    print_response(&mut scanner, GetModelInfo).await?;
 
     Ok(())
 }
