@@ -84,6 +84,12 @@ pub enum DecoderError {
     #[error("malformed response")]
     Malformed,
 
+    #[error("command must be executed in program mode")]
+    NotAcceptable,
+
+    #[error("command format error or invalid value")]
+    ErrorResponse,
+
     #[error(transparent)]
     DelimiterError(#[from] AnyDelimiterCodecError),
 
@@ -109,6 +115,14 @@ impl Decoder for Codec {
         };
 
         let raw_values = all_fields.collect::<Vec<_>>();
+
+        if raw_values.len() == 1 {
+            match raw_values[0].as_ref() {
+                b"NG" => return Err(DecoderError::NotAcceptable),
+                b"ERR" => return Err(DecoderError::ErrorResponse),
+                _ => {}
+            }
+        }
 
         Ok(Some(RawResponse { cmd, raw_values }))
     }
@@ -217,6 +231,20 @@ mod tests {
             let err = decode(b"\r").unwrap_err();
 
             assert_matches!(err, DecoderError::Malformed);
+        }
+
+        #[test]
+        fn not_acceptable_response() {
+            let err = decode(b"CMD,NG\r").unwrap_err();
+
+            assert_matches!(err, DecoderError::NotAcceptable);
+        }
+
+        #[test]
+        fn error_response() {
+            let err = decode(b"CMD,ERR\r").unwrap_err();
+
+            assert_matches!(err, DecoderError::ErrorResponse);
         }
 
         #[test]
