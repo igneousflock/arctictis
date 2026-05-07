@@ -294,10 +294,7 @@ mod tests {
             let result = decode(b"CMD,FOO\r")
                 .deserialize::<SimpleCommand>()
                 .unwrap_err();
-            assert_matches!(
-                result,
-                ResponseError::InvalidFields(OkResponseError::UnexpectedValue)
-            );
+            assert_matches!(result, ResponseError::InvalidFields(OkResponseError));
         }
 
         fn decode(raw: &[u8]) -> RawResponse {
