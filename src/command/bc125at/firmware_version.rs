@@ -5,10 +5,8 @@ use tokio_util::bytes::Bytes;
 use crate::command::{Response, command};
 
 #[derive(Debug, thiserror::Error)]
-pub enum FirmwareVersionError {
-    #[error("invalid UTF-8 bytes")]
-    Utf8Error(#[from] Utf8Error),
-}
+#[error("invalid UTF-8 bytes")]
+pub struct FirmwareVersionError(#[from] pub Utf8Error);
 
 #[derive(Debug)]
 pub struct FirmwareVersion(pub String);
