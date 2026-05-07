@@ -102,7 +102,7 @@ pub(crate) use range_response;
 
 #[cfg(test)]
 mod tests {
-    use claims::{assert_none, assert_some_eq};
+    use claims::{assert_matches, assert_none, assert_some_eq};
     use tokio_util::bytes::BytesMut;
 
     use crate::{
@@ -198,8 +198,7 @@ mod tests {
     }
 
     mod range_response {
-        use claims::assert_matches;
-        use tokio_util::bytes::Bytes;
+        use crate::command::test::deserialize;
 
         use super::*;
 
@@ -223,30 +222,26 @@ mod tests {
 
         #[test]
         fn deserializes_valid_response() {
-            let response = deserialize(b"0").unwrap();
+            let response = deserialize::<U8RangeParam, _>(b"0").unwrap();
             assert_eq!(response, U8RangeParam(0));
         }
 
         #[test]
         fn invalid_utf8() {
-            let err = deserialize(&[0, 159]).unwrap_err();
+            let err = deserialize::<U8RangeParam, _>(&[0, 159]).unwrap_err();
             assert_matches!(err, ParamError::Utf8Error(_));
         }
 
         #[test]
         fn invalid_integer() {
-            let err = deserialize(b"a").unwrap_err();
+            let err = deserialize::<U8RangeParam, _>(b"a").unwrap_err();
             assert_matches!(err, ParamError::Parse(_));
         }
 
         #[test]
         fn out_of_range() {
-            let err = deserialize(b"20").unwrap_err();
+            let err = deserialize::<U8RangeParam, _>(b"20").unwrap_err();
             assert_matches!(err, ParamError::Invalid(20));
-        }
-
-        fn deserialize<T: AsRef<[u8]>>(val: &'static T) -> Result<U8RangeParam, ParamError> {
-            U8RangeParam::deserialize(&[Bytes::from(val.as_ref())])
         }
     }
 }

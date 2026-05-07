@@ -78,3 +78,13 @@ impl<'a> ParamBuffer<'a> {
         self.0.extend_from_slice(bytes);
     }
 }
+
+#[cfg(test)]
+pub mod test {
+    use super::*;
+
+    /// Shorthand for commands to deserialize a response from raw bytes
+    pub fn deserialize<R: Response, T: AsRef<[u8]>>(val: &'static T) -> Result<R, R::Error> {
+        R::deserialize(&[Bytes::from(val.as_ref())])
+    }
+}
