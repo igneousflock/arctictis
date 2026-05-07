@@ -47,3 +47,6 @@ used_underscore_binding = "warn"
 
 unwrap_used = "warn"
 
+[dev-dependencies]
+claims = "0.8.0"
+

@@ -43,12 +43,23 @@ macro_rules! command {
 
 macro_rules! range_param {
     ($name:ident($range:expr): $type:ty) => {
-        #[derive(::core::clone::Clone, ::core::marker::Copy, ::core::fmt::Debug)]
+        #[derive(
+            ::core::clone::Clone,
+            ::core::marker::Copy,
+            ::core::fmt::Debug,
+            ::core::cmp::PartialEq,
+            ::core::cmp::Eq,
+        )]
         pub struct $name($type);
 
         impl $name {
             pub fn new(value: $type) -> ::core::option::Option<Self> {
                 ($range).contains(&value).then_some(Self(value))
+            }
+
+            #[allow(unused)]
+            pub fn value(&self) -> $type {
+                self.0
             }
         }
 

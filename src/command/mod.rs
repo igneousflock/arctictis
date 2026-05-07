@@ -41,7 +41,7 @@ impl<'a> ParamBuffer<'a> {
         Self(bytes)
     }
 
-    fn serialize_param(&mut self, bytes: &[u8]) {
+    pub fn serialize_param(&mut self, bytes: &[u8]) {
         self.0.put_u8(PARAM_DELIMITER);
         self.0.extend_from_slice(bytes);
     }
