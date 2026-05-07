@@ -4,13 +4,15 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-# bytes = "1.11.0"
 futures-util = "0.3.31"
 itoa = "1.0.18"
 thiserror = "2.0.17"
-tokio = { version = "1.49.0", features = ["macros", "rt-multi-thread", "time"] }
 tokio-serial = { version = "5.4.5", features = ["codec"] }
 tokio-util = "0.7.18"
+
+[dev-dependencies]
+claims = "0.8.0"
+tokio = { version = "1.49.0", features = ["macros", "rt-multi-thread"] }
 
 [lints.clippy]
 cloned_instead_of_copied = "warn"
@@ -46,7 +48,4 @@ unused_self = "warn"
 used_underscore_binding = "warn"
 
 unwrap_used = "warn"
-
-[dev-dependencies]
-claims = "0.8.0"
 
