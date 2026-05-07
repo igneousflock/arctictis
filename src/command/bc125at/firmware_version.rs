@@ -1,5 +1,7 @@
 use std::str::Utf8Error;
 
+use tokio_util::bytes::Bytes;
+
 use crate::command::{Response, command};
 
 #[derive(Debug, thiserror::Error)]
@@ -13,7 +15,7 @@ pub struct FirmwareVersion(pub String);
 
 impl Response for FirmwareVersion {
     type Error = FirmwareVersionError;
-    fn deserialize(raw_values: &[bytes::Bytes]) -> Result<Self, Self::Error> {
+    fn deserialize(raw_values: &[Bytes]) -> Result<Self, Self::Error> {
         let version = str::from_utf8(&raw_values[0])?.to_string();
         Ok(Self(version))
     }

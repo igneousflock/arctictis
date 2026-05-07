@@ -1,5 +1,7 @@
-use bytes::{BufMut, Bytes};
-use tokio_util::codec::{AnyDelimiterCodec, AnyDelimiterCodecError, Decoder, Encoder};
+use tokio_util::{
+    bytes::{BufMut, Bytes, BytesMut},
+    codec::{AnyDelimiterCodec, AnyDelimiterCodecError, Decoder, Encoder},
+};
 
 use crate::{
     bytes_split::BytesSplit,
@@ -28,11 +30,7 @@ where
 {
     type Error = std::io::Error;
 
-    fn encode(
-        &mut self,
-        item: Cmd,
-        dst: &mut tokio_util::bytes::BytesMut,
-    ) -> Result<(), Self::Error> {
+    fn encode(&mut self, item: Cmd, dst: &mut BytesMut) -> Result<(), Self::Error> {
         let params = item.params();
         let est_len = Cmd::TEXT.len() + params.count() + params.total_size() + 1;
         dst.reserve(est_len);
@@ -96,10 +94,7 @@ impl Decoder for Codec {
     type Item = RawResponse;
     type Error = DecoderError;
 
-    fn decode(
-        &mut self,
-        src: &mut tokio_util::bytes::BytesMut,
-    ) -> Result<Option<Self::Item>, Self::Error> {
+    fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
         let Some(output) = self.decoder.decode(src)? else {
             return Ok(None);
         };

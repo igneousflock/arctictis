@@ -6,7 +6,6 @@ version = 4
 name = "arctictis"
 version = "0.1.0"
 dependencies = [
- "bytes",
  "futures-util",
  "itoa",
  "thiserror",

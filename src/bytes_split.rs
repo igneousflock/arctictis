@@ -1,4 +1,4 @@
-use bytes::{Buf, Bytes};
+use tokio_util::bytes::{Buf, Bytes};
 
 pub struct BytesSplit(Bytes, u8);
 
@@ -43,7 +43,7 @@ mod tests {
     #![allow(clippy::unwrap_used)]
 
     use super::*;
-    use bytes::Bytes;
+    use tokio_util::bytes::Bytes;
 
     #[test]
     fn splits_on_commas() {

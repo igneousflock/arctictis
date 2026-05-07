@@ -73,7 +73,7 @@ macro_rules! range_response {
             type Error = $error;
 
             fn deserialize(
-                raw_values: &[::bytes::Bytes],
+                raw_values: &[::tokio_util::bytes::Bytes],
             ) -> ::core::result::Result<Self, Self::Error> {
                 let level = ::core::str::from_utf8(&raw_values[0])?.parse()?;
                 Self::new(level).ok_or(Self::Error::$variant(level))

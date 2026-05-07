@@ -4,7 +4,7 @@ mod macros;
 mod no_params;
 mod ok_response;
 
-use bytes::{BufMut, Bytes, BytesMut};
+use tokio_util::bytes::{BufMut, Bytes, BytesMut};
 
 pub(crate) use macros::{command, range_param, range_response};
 pub(crate) use no_params::NoParams;
