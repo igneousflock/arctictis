@@ -8,8 +8,8 @@ use crate::{
     command::{Command, ParamBuffer, Params, Response},
 };
 
-const RETURN_CODE: u8 = b'\r';
-const PARAM_DELIMITER: u8 = b',';
+pub(crate) const RETURN_CODE: u8 = b'\r';
+pub(crate) const PARAM_DELIMITER: u8 = b',';
 
 #[derive(Clone, Debug)]
 pub struct Codec {
@@ -38,7 +38,7 @@ where
         dst.extend_from_slice(Cmd::TEXT);
         params.serialize_to(ParamBuffer::new(dst));
 
-        dst.put_u8(b'\r');
+        dst.put_u8(RETURN_CODE);
 
         Ok(())
     }

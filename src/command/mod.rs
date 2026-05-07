@@ -10,6 +10,8 @@ pub(crate) use macros::{command, range_param, range_response};
 pub(crate) use no_params::NoParams;
 pub use ok_response::{OkResponse, OkResponseError};
 
+use crate::codec::PARAM_DELIMITER;
+
 pub trait Command {
     const TEXT: &'static [u8];
     type Params: Params;
@@ -40,7 +42,7 @@ impl<'a> ParamBuffer<'a> {
     }
 
     fn serialize_param(&mut self, bytes: &[u8]) {
-        self.0.put_u8(b',');
+        self.0.put_u8(PARAM_DELIMITER);
         self.0.extend_from_slice(bytes);
     }
 }
