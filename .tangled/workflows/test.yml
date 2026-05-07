@@ -1,0 +1,18 @@
+when:
+  - event: ["push"]
+    branch: ci-test
+
+engine: nixery
+
+dependencies:
+  nixpkgs:
+    - cargo
+
+steps:
+  - name: run linter
+    command: |
+      cargo clippy --all-targets
+  - name: run all tests
+    command: |
+      cargo test
+
