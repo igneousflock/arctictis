@@ -32,7 +32,7 @@ where
 
     fn encode(&mut self, item: Cmd, dst: &mut BytesMut) -> Result<(), Self::Error> {
         let params = item.params();
-        let est_len = Cmd::TEXT.len() + params.count() + params.total_size() + 1;
+        let est_len = Cmd::TEXT.len() + params.count() + params.max_size() + 1;
         dst.reserve(est_len);
 
         dst.extend_from_slice(Cmd::TEXT);

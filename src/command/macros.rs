@@ -67,7 +67,7 @@ macro_rules! range_param {
             fn count(&self) -> usize {
                 1
             }
-            fn total_size(&self) -> usize {
+            fn max_size(&self) -> usize {
                 <$type as ::itoa::Integer>::MAX_STR_LEN
             }
             fn serialize_to(&self, mut buffer: crate::command::ParamBuffer) {

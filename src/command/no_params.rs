@@ -7,7 +7,7 @@ impl Params for NoParams {
         0
     }
 
-    fn total_size(&self) -> usize {
+    fn max_size(&self) -> usize {
         0
     }
 
