@@ -1,5 +1,15 @@
 macro_rules! range_response {
-    ($name:ty => $error:ty : $variant:ident) => {
+    ($name:ty => $error:ident : $invalid_variant:ident($msg:literal)) => {
+        #[derive(::core::fmt::Debug, ::thiserror::Error)]
+        pub enum $error {
+            #[error(transparent)]
+            Utf8Error(#[from] ::core::str::Utf8Error),
+            #[error(transparent)]
+            Parse(#[from] ::core::num::ParseIntError),
+            #[error($msg)]
+            $invalid_variant(u8),
+        }
+
         impl crate::command::Response for $name {
             type Error = $error;
 
@@ -7,7 +17,7 @@ macro_rules! range_response {
                 raw_values: &[::tokio_util::bytes::Bytes],
             ) -> ::core::result::Result<Self, Self::Error> {
                 let level = ::core::str::from_utf8(&raw_values[0])?.parse()?;
-                Self::new(level).ok_or(Self::Error::$variant(level))
+                Self::new(level).ok_or(Self::Error::$invalid_variant(level))
             }
             fn expected_field_count() -> usize {
                 1
@@ -24,18 +34,8 @@ mod tests {
 
     use crate::command::{Response, range_param, test::deserialize};
 
-    #[derive(Debug, thiserror::Error)]
-    pub enum ParamError {
-        #[error("invalid UTF-8 bytes")]
-        Utf8Error(#[from] std::str::Utf8Error),
-        #[error(transparent)]
-        Parse(#[from] std::num::ParseIntError),
-        #[error("invalid value, got `{0}`")]
-        Invalid(u8),
-    }
-
     range_param!(U8RangeParam(0..=10): u8);
-    range_response!(U8RangeParam => ParamError : Invalid);
+    range_response!(U8RangeParam => ParamError : Invalid("invalid"));
 
     #[test]
     fn expected_field_count() {

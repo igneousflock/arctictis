@@ -51,18 +51,8 @@ mod tests {
         command::{NoParams, range_param, range_response},
     };
 
-    #[derive(Debug, thiserror::Error)]
-    pub enum ParamError {
-        #[error("invalid UTF-8 bytes")]
-        Utf8Error(#[from] std::str::Utf8Error),
-        #[error(transparent)]
-        Parse(#[from] std::num::ParseIntError),
-        #[error("invalid value, got `{0}`")]
-        Invalid(u8),
-    }
-
     range_param!(RangeParam(0..=15): u8);
-    range_response!(RangeParam => ParamError : Invalid);
+    range_response!(RangeParam => ParamError : Invalid("invalid"));
 
     #[test]
     fn no_params_ok_response() {
