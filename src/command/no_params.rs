@@ -1,5 +1,6 @@
 use crate::command::{ParamBuffer, Params};
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct NoParams;
 
 impl Params for NoParams {
