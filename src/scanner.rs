@@ -11,6 +11,8 @@ use crate::{
 
 const VENDOR_ID: u16 = 0x1965;
 const PRODUCT_ID: u16 = 0x0017;
+const TIMEOUT: Duration = Duration::from_mins(2);
+const BAUD_RATE: u32 = 115_200;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ScannerError {
@@ -55,8 +57,8 @@ impl Scanner {
             return Err(ScannerError::ScannerNotFound);
         };
 
-        let port = tokio_serial::new(&scanner_port_path, 115200)
-            .timeout(Duration::from_secs(120))
+        let port = tokio_serial::new(&scanner_port_path, BAUD_RATE)
+            .timeout(TIMEOUT)
             .open_native_async()?;
 
         let framed = Framed::new(port, Codec::new());
