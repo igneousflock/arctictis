@@ -1,3 +1,4 @@
+mod backlight;
 mod battery_charge_time;
 mod firmware_version;
 mod lcd_contrast;
@@ -5,6 +6,7 @@ mod program_mode;
 mod squelch;
 mod volume;
 
+pub use backlight::{Backlight, BacklightError, GetBacklight, SetBacklight};
 pub use battery_charge_time::{
     BatteryChargeTime, BatteryChargeTimeError, GetBatteryInfo, SetBatteryInfo,
 };
