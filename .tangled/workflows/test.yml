@@ -11,8 +11,8 @@ dependencies:
 steps:
   - name: run linter
     command: |
-      cargo clippy --all-targets
+      nix develop . -c cargo clippy --all-targets
   - name: run all tests
     command: |
-      cargo test
+      nix develop . -c cargo test
 
