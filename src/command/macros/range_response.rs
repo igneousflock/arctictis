@@ -1,5 +1,5 @@
 macro_rules! range_response {
-    ($name:ty => $error:ident : $invalid_variant:ident($msg:literal)) => {
+    ($name:ty => $error:ident::$invalid_variant:ident($msg:literal)) => {
         #[derive(::core::fmt::Debug, ::thiserror::Error)]
         pub enum $error {
             #[error(transparent)]
@@ -35,7 +35,7 @@ mod tests {
     use crate::command::{Response, range_param, test::deserialize};
 
     range_param!(U8RangeParam(0..=10): u8);
-    range_response!(U8RangeParam => ParamError : Invalid("invalid"));
+    range_response!(U8RangeParam => ParamError::Invalid("invalid"));
 
     #[test]
     fn expected_field_count() {
