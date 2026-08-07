@@ -32,7 +32,9 @@
             mkShell {
               buildInputs = [
                 rust-bin.stable.latest.default
-                pkgs.cargo-nextest
+
+                cargo-nextest
+                just
               ];
             };
         };
