@@ -2,22 +2,26 @@ use tokio_util::bytes::Bytes;
 
 use crate::command::Response;
 
+#[derive(Debug, Clone, Copy)]
+pub struct OkResponse;
 #[derive(Debug, thiserror::Error)]
 #[error("expected `OK`")]
 pub struct OkResponseError;
 
-#[derive(Clone, Copy, Debug)]
-pub struct OkResponse;
-
 impl Response for OkResponse {
     type Error = OkResponseError;
 
-    fn deserialize(raw_values: &[Bytes]) -> Result<Self, Self::Error> {
-        if raw_values[0] != b"OK".as_ref() {
-            return Err(OkResponseError);
+    fn deserialize<'i, I: Iterator<Item = &'i Bytes>>(
+        mut raw_values: I,
+    ) -> Result<Self, Self::Error> {
+        if let Some(val) = raw_values.next()
+            && val.as_ref() == b"OK"
+            && raw_values.next().is_none()
+        {
+            Ok(Self)
+        } else {
+            Err(OkResponseError)
         }
-
-        Ok(Self)
     }
 
     fn expected_field_count() -> usize {

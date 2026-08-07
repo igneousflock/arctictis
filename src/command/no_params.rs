@@ -1,18 +1,19 @@
-use crate::command::{ParamBuffer, Params};
+use crate::command::Params;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct NoParams;
 
+impl IntoIterator for NoParams {
+    type Item = &'static [u8];
+
+    type IntoIter = std::iter::Empty<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        std::iter::empty()
+    }
+}
+
 impl Params for NoParams {
-    fn count(&self) -> usize {
+    fn size_hint(&self) -> usize {
         0
-    }
-
-    fn max_size(&self) -> usize {
-        0
-    }
-
-    fn serialize_to(&self, _buffer: ParamBuffer) {
-        /* noop */
     }
 }
