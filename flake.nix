@@ -30,7 +30,10 @@
           devShells.default =
             with pkgs;
             mkShell {
-              buildInputs = [ rust-bin.stable.latest.default ];
+              buildInputs = [
+                rust-bin.stable.latest.default
+                pkgs.cargo-nextest
+              ];
             };
         };
     };
