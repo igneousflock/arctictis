@@ -1,6 +1,7 @@
 pub mod bc125at;
 mod no_params;
 mod ok_response;
+mod single_param;
 
 use tokio_util::bytes::Bytes;
 
@@ -16,8 +17,12 @@ pub trait Command {
     fn params(self) -> Self::Params;
 }
 
-pub trait Params: IntoIterator<Item = &'static [u8]> {
+pub trait Params: IntoIterator<Item = Bytes> {
     fn size_hint(&self) -> usize;
+}
+
+pub trait IntoParam {
+    fn into_param(self) -> Bytes;
 }
 
 pub trait Response: Sized {

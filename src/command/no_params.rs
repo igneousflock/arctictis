@@ -1,9 +1,11 @@
+use tokio_util::bytes::Bytes;
+
 use crate::command::Params;
 
 pub struct NoParams;
 
 impl IntoIterator for NoParams {
-    type Item = &'static [u8];
+    type Item = Bytes;
 
     type IntoIter = std::iter::Empty<Self::Item>;
 

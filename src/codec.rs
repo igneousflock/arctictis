@@ -38,7 +38,7 @@ where
         dst.extend_from_slice(Cmd::TEXT);
         for param in params {
             dst.put_u8(PARAM_DELIMITER);
-            dst.extend_from_slice(param);
+            dst.extend_from_slice(param.as_ref());
         }
 
         dst.put_u8(RETURN_CODE);
