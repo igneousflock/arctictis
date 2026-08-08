@@ -25,6 +25,10 @@ pub trait IntoParam {
     fn into_param(self) -> Bytes;
 }
 
+pub trait ResponseField: Sized {
+    fn deserialize(raw: &[u8]) -> Option<Self>;
+}
+
 pub trait Response: Sized {
     type Error: std::error::Error;
 
