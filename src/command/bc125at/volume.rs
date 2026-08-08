@@ -22,6 +22,10 @@ impl IntoParam for Volume {
     fn into_param(self) -> Bytes {
         Bytes::from(format!("{}", self.0))
     }
+
+    fn size_hint(&self) -> usize {
+        todo!()
+    }
 }
 
 impl Response for Volume {

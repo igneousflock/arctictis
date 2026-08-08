@@ -23,6 +23,7 @@ pub trait Params: IntoIterator<Item = Bytes> {
 
 pub trait IntoParam {
     fn into_param(self) -> Bytes;
+    fn size_hint(&self) -> usize;
 }
 
 pub trait ResponseField: Sized {

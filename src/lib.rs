@@ -1,3 +1,6 @@
+#[macro_use]
+mod macros;
+
 mod bytes_split;
 mod codec;
 mod command;
