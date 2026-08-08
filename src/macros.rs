@@ -14,12 +14,12 @@ macro_rules! get_set_command {
     (
         text: $text:literal,
         $(#[$get_doc:meta])?
-        get: $get:ident,
+        get: $get:ident $(($query_type:tt))?,
         $(#[$set_doc:meta])?
         set: $set:ident,
         type: $set_name:ident $set_error:tt $set_fields:tt,
     ) => {
-        get_set_command!(@get $get $text $set_name $($get_doc)?);
+        get_set_command!(@get $get $(($query_type))? $text $set_name $($get_doc)?);
         get_set_command!(@set $set $text $set_name $($set_doc)?);
         get_set_command!(@params $set_name $set_error $set_fields);
     };
@@ -31,6 +31,7 @@ macro_rules! get_set_command {
     ) => {
         $(get_set_command!(@param $kind $type_name $body $($field_doc)?);)*
 
+        #[derive(Clone, Debug)]
         pub struct $set_name {
             $(pub $field_name: $type_name),*
         }
@@ -58,7 +59,7 @@ macro_rules! get_set_command {
             }
         }
 
-        #[derive(Debug, thiserror::Error)]
+        #[derive(Clone, Debug, thiserror::Error)]
         pub enum $set_error_name {
             #[error("failed to deserialize field {0}")]
             BadField(&'static str),
@@ -83,12 +84,13 @@ macro_rules! get_set_command {
             }
 
             fn expected_field_count() -> usize {
-                2
+                count_tts!($($field_name)*)
             }
         }
     };
     // Generators for param types
     (@param enum $name:ident {$($(#[$variant_doc:meta])? $variant:ident => $val:literal),* $(,)? } $($doc:meta)?) => {
+        #[derive(Clone, Copy, Debug)]
         $(#[$doc])?
         pub enum $name { $($(#[$variant_doc])? $variant),* }
 
@@ -113,6 +115,7 @@ macro_rules! get_set_command {
         }
     };
     (@param range $name:ident ($range:expr => $type:ty) $($doc:meta)?) => {
+        #[derive(Clone, Copy, Debug)]
         $(#[$doc])?
         pub struct $name($type);
 
@@ -127,7 +130,9 @@ macro_rules! get_set_command {
                 tokio_util::bytes::Bytes::from(format!("{}", self.0))
             }
 
-            fn size_hint(&self) -> usize {todo!()}
+            fn size_hint(&self) -> usize {
+                <$type as itoa::Integer>::MAX_STR_LEN
+            }
         }
 
         impl crate::command::ResponseField for $name {
@@ -139,11 +144,12 @@ macro_rules! get_set_command {
         }
     };
     (@param str $name:ident ($max_len:literal) $($doc:meta)?) => {
+        #[derive(Clone, Debug)]
         $(#[$doc])?
         pub struct $name(Vec<u8>);
 
         impl $name {
-            fn new(name: &[u8]) -> Option<Self> {
+            pub fn new(name: &[u8]) -> Option<Self> {
                 (name.len() <= $max_len)
                     .then_some(Self(Vec::from(name)))
             }
@@ -165,6 +171,7 @@ macro_rules! get_set_command {
     };
     // Commands
     (@get $name:ident $text:literal $response:ident $($doc:meta)?) => {
+        #[derive(Clone, Copy, Debug)]
         $(#[$doc])?
         pub struct $name;
         impl crate::command::Command for $name {
@@ -174,7 +181,22 @@ macro_rules! get_set_command {
             fn params(self) -> Self::Params { crate::command::NoParams }
         }
     };
+    (@get $name:ident ($query_type:ty) $text:literal $response:ident $($doc:meta)?) => {
+        #[derive(Clone, Debug)]
+        $(#[$doc])?
+        pub struct $name(pub $query_type);
+        impl crate::command::Command for $name {
+            const TEXT: &'static [u8] = $text;
+            type Params = crate::command::single_param::SingleParam<$query_type>;
+            type Response = $response;
+            fn params(self) -> Self::Params {
+                crate::command::single_param::SingleParam(self.0)
+            }
+        }
+
+    };
     (@set $name:ident $text:literal $params:ident $($doc:meta)?) => {
+        #[derive(Clone, Debug)]
         $(#[$doc])?
         pub struct $name(pub $params);
         impl crate::command::Command for $name {
