@@ -112,6 +112,57 @@ macro_rules! get_set_command {
             }
         }
     };
+    (@param range $name:ident ($range:expr => $type:ty) $($doc:meta)?) => {
+        $(#[$doc])?
+        pub struct $name($type);
+
+        impl $name {
+            pub fn new(value: $type) -> Option<Self> {
+                ($range).contains(&value).then_some(Self(value))
+            }
+        }
+
+        impl crate::command::IntoParam for $name {
+            fn into_param(self) -> tokio_util::bytes::Bytes {
+                tokio_util::bytes::Bytes::from(format!("{}", self.0))
+            }
+
+            fn size_hint(&self) -> usize {todo!()}
+        }
+
+        impl crate::command::ResponseField for $name {
+            fn deserialize(raw: &[u8]) -> Option<Self> {
+                str::from_utf8(raw).ok()?
+                    .parse().ok()
+                    .and_then(Self::new)
+            }
+        }
+    };
+    (@param str $name:ident ($max_len:literal) $($doc:meta)?) => {
+        $(#[$doc])?
+        pub struct $name(Vec<u8>);
+
+        impl $name {
+            fn new(name: &[u8]) -> Option<Self> {
+                (name.len() <= $max_len)
+                    .then_some(Self(Vec::from(name)))
+            }
+        }
+
+        impl crate::command::IntoParam for $name {
+            fn into_param(self) -> tokio_util::bytes::Bytes {
+                self.0.into()
+            }
+
+            fn size_hint(&self) -> usize { self.0.len() }
+        }
+
+        impl crate::command::ResponseField for $name {
+            fn deserialize(raw: &[u8]) -> Option<Self> {
+                Some(Self(Vec::from(raw)))
+            }
+        }
+    };
     // Commands
     (@get $name:ident $text:literal $response:ident $($doc:meta)?) => {
         $(#[$doc])?
