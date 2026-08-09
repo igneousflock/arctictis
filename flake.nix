@@ -33,6 +33,7 @@
               buildInputs = [
                 rust-bin.stable.latest.default
 
+                cargo-expand
                 cargo-nextest
                 just
               ];

@@ -15,3 +15,6 @@ run-example example:
 test test_filter='':
     cargo nextest run -- {{ test_filter }}
 alias t := test
+
+expand path:
+    cargo expand {{ path }}
