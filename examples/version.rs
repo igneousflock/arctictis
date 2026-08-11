@@ -1,4 +1,4 @@
-use arctictis::{Command, Scanner, bc125at::GetFirmwareVersion};
+use arctictis::{Command, Scanner, bc125at::firmware_version::GetFirmwareVersion};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

@@ -3,8 +3,8 @@
 use arctictis::{
     Command, Scanner,
     bc125at::{
-        ChannelIndex, ChannelInfo, EnterProgramMode, ExitProgramMode, Frequency, GetChannelInfo,
-        SetChannelInfo,
+        channel_info::{ChannelIndex, ChannelInfo, Frequency, GetChannelInfo, SetChannelInfo},
+        program_mode::{EnterProgramMode, ExitProgramMode},
     },
 };
 

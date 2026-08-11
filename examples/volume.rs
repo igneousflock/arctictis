@@ -2,7 +2,7 @@
 
 use arctictis::{
     Command, Scanner,
-    bc125at::{GetVolume, SetVolume, Volume},
+    bc125at::volume::{GetVolume, SetVolume, Volume},
 };
 
 #[tokio::main]

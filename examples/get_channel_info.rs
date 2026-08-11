@@ -2,7 +2,10 @@
 
 use arctictis::{
     Command, Scanner,
-    bc125at::{ChannelIndex, EnterProgramMode, ExitProgramMode, GetChannelInfo},
+    bc125at::{
+        channel_info::{ChannelIndex, GetChannelInfo},
+        program_mode::{EnterProgramMode, ExitProgramMode},
+    },
 };
 
 #[tokio::main]
