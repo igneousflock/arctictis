@@ -12,4 +12,5 @@ get_set_command! {
             On => b"1",
         },
     ),
+    non_program_mode: true,
 }

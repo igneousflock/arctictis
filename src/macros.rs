@@ -18,10 +18,13 @@ macro_rules! get_set_command {
         $(#[$set_doc:meta])?
         set: $set:ident,
         type: $set_name:ident $set_error:tt $set_fields:tt,
+        $(non_program_mode: $npm:tt,)?
     ) => {
         get_set_command!(@get $get $(($query_type))? $text $set_name $($get_doc)?);
         get_set_command!(@set $set $text $set_name $($set_doc)?);
         get_set_command!(@params $set_name $set_error $set_fields);
+
+        $(get_set_command!(@npm $get $set $npm);)?
     };
     // Top level - single param
     (
@@ -32,10 +35,13 @@ macro_rules! get_set_command {
         set: $set:ident,
         $(#[$field_doc:meta])?
         single_field: $kind:tt $field_type:ident $field_body:tt $field_error:ident,
+        $(non_program_mode: $npm:tt,)?
     ) => {
         get_set_command!(@get $get $(($query_type))? $text $field_type $($get_doc)?);
         get_set_command!(@set_single $set $text $field_type $([$set_doc])?);
         get_set_command!(@single_param $($field_doc)? $kind $field_type $field_body $field_error);
+
+        $(get_set_command!(@npm $get $set $npm);)?
     };
     // Param set
     (
@@ -251,5 +257,10 @@ macro_rules! get_set_command {
             type Response = crate::command::OkResponse;
             fn params(self) -> Self::Params { crate::command::SingleParam(self.0) }
         }
-    }
+    };
+    // Non-program mode impl
+    (@npm $get:ident $set:ident $_npm:tt) => {
+        impl crate::command::NonProgramModeCommand for $get {}
+        impl crate::command::NonProgramModeCommand for $set {}
+    };
 }

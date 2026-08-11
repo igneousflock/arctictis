@@ -1,7 +1,7 @@
 use std::string::FromUtf8Error;
 
 use crate::{
-    Command,
+    Command, NonProgramModeCommand,
     command::{NoParams, Response},
 };
 
@@ -51,3 +51,4 @@ impl Command for GetFirmwareVersion {
         NoParams
     }
 }
+impl NonProgramModeCommand for GetFirmwareVersion {}
