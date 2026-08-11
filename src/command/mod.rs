@@ -7,6 +7,7 @@ use tokio_util::bytes::Bytes;
 
 pub use no_params::NoParams;
 pub use ok_response::{OkResponse, OkResponseError};
+pub use single_param::SingleParam;
 
 pub trait Command {
     const TEXT: &'static [u8];

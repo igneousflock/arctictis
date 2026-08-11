@@ -10,7 +10,7 @@ macro_rules! count_tts {
 }
 
 macro_rules! get_set_command {
-    // Top level
+    // Top level - many params
     (
         text: $text:literal,
         $(#[$get_doc:meta])?
@@ -22,6 +22,20 @@ macro_rules! get_set_command {
         get_set_command!(@get $get $(($query_type))? $text $set_name $($get_doc)?);
         get_set_command!(@set $set $text $set_name $($set_doc)?);
         get_set_command!(@params $set_name $set_error $set_fields);
+    };
+    // Top level - single param
+    (
+        text: $text:literal,
+        $(#[$get_doc:meta])?
+        get: $get:ident $(($query_type:tt))?,
+        $(#[$set_doc:meta])?
+        set: $set:ident,
+        $(#[$field_doc:meta])?
+        single_field: $kind:tt $field_type:ident $field_body:tt $field_error:ident,
+    ) => {
+        get_set_command!(@get $get $(($query_type))? $text $field_type $($get_doc)?);
+        get_set_command!(@set_single $set $text $field_type $([$set_doc])?);
+        get_set_command!(@single_param $($field_doc)? $kind $field_type $field_body $field_error);
     };
     // Param set
     (
@@ -88,8 +102,34 @@ macro_rules! get_set_command {
             }
         }
     };
+    // Single param
+    (@single_param $(#[$doc:meta])? $kind:tt $name:ident $body:tt $field_error:ident) => {
+        get_set_command!(@param $kind $name $body $($doc)?);
+
+        #[derive(Clone, Debug, thiserror::Error)]
+        #[error("failed to deserialize")]
+        pub struct $field_error;
+
+        impl crate::command::Response for $name {
+            type Error = $field_error;
+
+
+            fn deserialize<'i, I: Iterator<Item = &'i tokio_util::bytes::Bytes>>(mut raw_values: I) -> Result<Self, Self::Error> {
+                if let Some(val) = raw_values.next() && raw_values.next().is_none() {
+                    crate::command::ResponseField::deserialize(val)
+                        .ok_or($field_error)
+                } else {
+                    Err($field_error)
+                }
+            }
+
+            fn expected_field_count() -> usize {
+                1
+            }
+        }
+    };
     // Generators for param types
-    (@param enum $name:ident {$($(#[$variant_doc:meta])? $variant:ident => $val:literal),* $(,)? } $($doc:meta)?) => {
+    (@param enum $name:ident { $($(#[$variant_doc:meta])? $variant:ident => $val:literal),* $(,)? } $($doc:meta)?) => {
         #[derive(Clone, Copy, Debug)]
         $(#[$doc])?
         pub enum $name { $($(#[$variant_doc])? $variant),* }
@@ -193,7 +233,6 @@ macro_rules! get_set_command {
                 crate::command::single_param::SingleParam(self.0)
             }
         }
-
     };
     (@set $name:ident $text:literal $params:ident $($doc:meta)?) => {
         #[derive(Clone, Debug)]
@@ -204,6 +243,17 @@ macro_rules! get_set_command {
             type Params = $params;
             type Response = crate::command::OkResponse;
             fn params(self) -> Self::Params { self.0 }
+        }
+    };
+    (@set_single $name:ident $text:literal $param:ident $($doc:meta)?) => {
+        #[derive(Clone, Debug)]
+        $(#[$doc])?
+        pub struct $name(pub $param);
+        impl crate::command::Command for $name {
+            const TEXT: &'static [u8] = $text;
+            type Params = crate::command::SingleParam<$param>;
+            type Response = crate::command::OkResponse;
+            fn params(self) -> Self::Params { crate::command::SingleParam(self.0) }
         }
     }
 }

@@ -2,6 +2,7 @@ use tokio_util::bytes::Bytes;
 
 use crate::command::{IntoParam, Params};
 
+#[derive(Clone, Debug)]
 pub struct SingleParam<T: IntoParam>(pub T);
 
 impl<T: IntoParam> IntoIterator for SingleParam<T> {
