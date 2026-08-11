@@ -74,12 +74,8 @@ macro_rules! get_set_command {
         }
 
         #[derive(Clone, Debug, thiserror::Error)]
-        pub enum $set_error_name {
-            #[error("failed to deserialize field {0}")]
-            BadField(&'static str),
-            #[error("incorrect number of fields")]
-            Malformed,
-        }
+        #[error("failed to deserialize field {0}")]
+        pub struct $set_error_name(&'static str);
 
         impl crate::command::Response for $set_name {
             type Error = $set_error_name;
@@ -88,11 +84,11 @@ macro_rules! get_set_command {
                 use itertools::Itertools;
                 let (
                     $($field_name,)*
-                ) = raw_values.collect_tuple().ok_or(Self::Error::Malformed)?;
+                ) = raw_values.collect_tuple().expect("incorrect number of fields");
                 Ok(Self {
                     $(
                         $field_name: crate::command::ResponseField::deserialize($field_name)
-                            .ok_or(Self::Error::BadField(stringify!($field_name)))?,
+                            .ok_or($set_error_name(stringify!($field_name)))?,
                     )*
                 })
             }
