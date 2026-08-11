@@ -37,6 +37,7 @@ impl Response for FirmwareVersion {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
 pub struct GetFirmwareVersion;
 
 impl Command for GetFirmwareVersion {

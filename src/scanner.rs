@@ -16,9 +16,6 @@ const BAUD_RATE: u32 = 115_200;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ScannerError {
-    #[error("port closed")]
-    PortClosed,
-
     #[error("scanner not found")]
     ScannerNotFound,
 
@@ -30,15 +27,55 @@ pub enum ScannerError {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum EncodingError<E> {
-    #[error(transparent)]
-    Scanner(#[from] ScannerError),
+pub enum CommandError<Cmd: Command> {
+    #[error("port closed")]
+    PortClosed,
+    #[error("response is empty")]
+    ResponseEmpty,
+    #[error("command not acceptable at this time")]
+    CommandNotAcceptable,
+    #[error("scanner returned error")]
+    ErrorResponse,
+    // TODO: add expected/received fields
+    #[error("response is for wrong command")]
+    WrongCommand,
+    // TODO: add expected/received fields
+    #[error("incorrect number of fields in response")]
+    WrongNumberOfFields,
 
     #[error(transparent)]
-    Decoder(#[from] DecoderError),
+    FieldDecodeError(<Cmd::Response as Response>::Error),
 
     #[error(transparent)]
-    ResponseParserError(#[from] ResponseError<E>),
+    Io(#[from] std::io::Error),
+}
+
+impl<Cmd: Command> From<DecoderError> for CommandError<Cmd> {
+    fn from(error: DecoderError) -> Self {
+        use tokio_util::codec::AnyDelimiterCodecError;
+        match error {
+            DecoderError::ResponseEmpty => Self::ResponseEmpty,
+            DecoderError::CommandNotAcceptable => Self::CommandNotAcceptable,
+            DecoderError::ErrorResponse => Self::ErrorResponse,
+            DecoderError::DelimiterError(e) => match e {
+                AnyDelimiterCodecError::MaxChunkLengthExceeded => {
+                    unreachable!("we do not limit the chunk length")
+                }
+                AnyDelimiterCodecError::Io(io_error) => Self::Io(io_error),
+            },
+            DecoderError::Io(io_error) => Self::Io(io_error),
+        }
+    }
+}
+
+impl<Cmd: Command> From<ResponseError<<Cmd::Response as Response>::Error>> for CommandError<Cmd> {
+    fn from(error: ResponseError<<Cmd::Response as Response>::Error>) -> Self {
+        match error {
+            ResponseError::WrongCommand => Self::WrongCommand,
+            ResponseError::WrongNumberOfFields => Self::WrongNumberOfFields,
+            ResponseError::InvalidFields(e) => Self::FieldDecodeError(e),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -69,10 +106,12 @@ impl Scanner {
     pub async fn command<Cmd: Command>(
         &mut self,
         cmd: Cmd,
-    ) -> Result<Cmd::Response, EncodingError<<Cmd::Response as Response>::Error>> {
-        self.0.send(cmd).await.map_err(ScannerError::from)?;
-        let raw_response = self.0.next().await.ok_or(ScannerError::PortClosed)??;
+    ) -> Result<Cmd::Response, CommandError<Cmd>> {
+        self.0.send(cmd).await?;
+
+        let raw_response = self.0.next().await.ok_or(CommandError::PortClosed)??;
         let response = raw_response.deserialize::<Cmd>()?;
+
         Ok(response)
     }
 }

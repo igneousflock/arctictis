@@ -1,5 +1,6 @@
 use crate::{Command, OkResponse, command::NoParams};
 
+#[derive(Clone, Copy, Debug)]
 pub struct EnterProgramMode;
 
 impl Command for EnterProgramMode {
@@ -14,6 +15,7 @@ impl Command for EnterProgramMode {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
 pub struct ExitProgramMode;
 
 impl Command for ExitProgramMode {

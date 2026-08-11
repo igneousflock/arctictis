@@ -84,13 +84,11 @@ impl RawResponse {
 
 #[derive(Debug, thiserror::Error)]
 pub enum DecoderError {
-    #[error("malformed response")]
-    Malformed,
-
-    #[error("command must be executed in program mode")]
-    NotAcceptable,
-
-    #[error("command format error or invalid value")]
+    #[error("response is empty")]
+    ResponseEmpty,
+    #[error("command not acceptable at this time")]
+    CommandNotAcceptable,
+    #[error("scanner returned error")]
     ErrorResponse,
 
     #[error(transparent)]
@@ -114,14 +112,14 @@ impl Decoder for Codec {
         let mut all_fields = BytesSplit::new(output, PARAM_DELIMITER);
 
         let Some(cmd) = all_fields.next() else {
-            return Err(DecoderError::Malformed);
+            return Err(DecoderError::ResponseEmpty);
         };
 
         let raw_values = all_fields.collect::<Vec<_>>();
 
         if raw_values.len() == 1 {
             match raw_values[0].as_ref() {
-                b"NG" => return Err(DecoderError::NotAcceptable),
+                b"NG" => return Err(DecoderError::CommandNotAcceptable),
                 b"ERR" => return Err(DecoderError::ErrorResponse),
                 _ => {}
             }
