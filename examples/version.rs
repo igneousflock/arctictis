@@ -2,7 +2,7 @@
 
 use std::fmt::Debug;
 
-use arctictis::{Command, Scanner, bc125at::firmware_version::GetFirmwareVersion};
+use arctictis::{NonProgramModeCommand, Scanner, bc125at::firmware_version::GetFirmwareVersion};
 
 #[tokio::main]
 async fn main() {
@@ -13,7 +13,7 @@ async fn main() {
 
 async fn print_response<Cmd>(scanner: &mut Scanner, cmd: Cmd)
 where
-    Cmd: Command + Debug + 'static,
+    Cmd: NonProgramModeCommand + Debug + 'static,
     Cmd::Response: std::fmt::Debug,
 {
     let name = String::from_utf8_lossy(Cmd::TEXT);

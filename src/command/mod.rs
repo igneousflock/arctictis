@@ -38,3 +38,23 @@ pub trait Response: Sized {
 
     fn expected_field_count() -> usize;
 }
+
+pub type CommandResponseError<Cmd> = <<Cmd as Command>::Response as Response>::Error;
+
+pub trait NonProgramModeCommand: Command {}
+
+mod npmc {
+    use crate::bc125at::{
+        firmware_version::GetFirmwareVersion,
+        key_beep::{GetKeyBeepSetting, SetKeyBeep},
+        volume::{GetVolume, SetVolume},
+    };
+
+    use super::NonProgramModeCommand;
+
+    impl NonProgramModeCommand for GetFirmwareVersion {}
+    impl NonProgramModeCommand for GetKeyBeepSetting {}
+    impl NonProgramModeCommand for SetKeyBeep {}
+    impl NonProgramModeCommand for GetVolume {}
+    impl NonProgramModeCommand for SetVolume {}
+}

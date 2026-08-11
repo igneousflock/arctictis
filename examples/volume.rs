@@ -3,7 +3,7 @@
 use std::fmt::Debug;
 
 use arctictis::{
-    Command, Scanner,
+    NonProgramModeCommand, Scanner,
     bc125at::volume::{GetVolume, SetVolume, Volume},
 };
 
@@ -20,7 +20,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 async fn print_response<Cmd>(scanner: &mut Scanner, cmd: Cmd)
 where
-    Cmd: Command + Debug + 'static,
+    Cmd: NonProgramModeCommand + Debug + 'static,
     Cmd::Response: std::fmt::Debug,
 {
     let name = String::from_utf8_lossy(Cmd::TEXT);

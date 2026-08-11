@@ -1,12 +1,14 @@
-use std::time::Duration;
+use std::{error::Error, time::Duration};
 
 use futures_util::{SinkExt, StreamExt};
 use tokio_serial::{SerialPortBuilderExt, SerialPortType, SerialStream};
 use tokio_util::codec::Framed;
 
 use crate::{
+    OkResponseError,
+    bc125at::program_mode::{EnterProgramMode, ExitProgramMode},
     codec::{Codec, DecoderError, ResponseError},
-    command::{Command, Response},
+    command::{Command, CommandResponseError, NonProgramModeCommand},
 };
 
 const VENDOR_ID: u16 = 0x1965;
@@ -27,7 +29,7 @@ pub enum ScannerError {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum CommandError<Cmd: Command> {
+pub enum CommandError<FieldDecodeError: std::error::Error> {
     #[error("port closed")]
     PortClosed,
     #[error("response is empty")]
@@ -44,13 +46,13 @@ pub enum CommandError<Cmd: Command> {
     WrongNumberOfFields,
 
     #[error(transparent)]
-    FieldDecodeError(<Cmd::Response as Response>::Error),
+    FieldDecodeError(FieldDecodeError),
 
     #[error(transparent)]
     Io(#[from] std::io::Error),
 }
 
-impl<Cmd: Command> From<DecoderError> for CommandError<Cmd> {
+impl<E: Error> From<DecoderError> for CommandError<E> {
     fn from(error: DecoderError) -> Self {
         use tokio_util::codec::AnyDelimiterCodecError;
         match error {
@@ -68,8 +70,8 @@ impl<Cmd: Command> From<DecoderError> for CommandError<Cmd> {
     }
 }
 
-impl<Cmd: Command> From<ResponseError<<Cmd::Response as Response>::Error>> for CommandError<Cmd> {
-    fn from(error: ResponseError<<Cmd::Response as Response>::Error>) -> Self {
+impl<E: Error> From<ResponseError<E>> for CommandError<E> {
+    fn from(error: ResponseError<E>) -> Self {
         match error {
             ResponseError::WrongCommand => Self::WrongCommand,
             ResponseError::WrongNumberOfFields => Self::WrongNumberOfFields,
@@ -103,15 +105,47 @@ impl Scanner {
         Ok(Self(framed))
     }
 
-    pub async fn command<Cmd: Command>(
+    async fn any_command<Cmd: Command>(
         &mut self,
         cmd: Cmd,
-    ) -> Result<Cmd::Response, CommandError<Cmd>> {
+    ) -> Result<Cmd::Response, CommandError<CommandResponseError<Cmd>>> {
         self.0.send(cmd).await?;
 
         let raw_response = self.0.next().await.ok_or(CommandError::PortClosed)??;
         let response = raw_response.deserialize::<Cmd>()?;
 
         Ok(response)
+    }
+
+    pub async fn command<Cmd: NonProgramModeCommand>(
+        &mut self,
+        cmd: Cmd,
+    ) -> Result<Cmd::Response, CommandError<CommandResponseError<Cmd>>> {
+        self.any_command(cmd).await
+    }
+
+    pub async fn with_program_mode<T, F: AsyncFnOnce(ProgramModeScanner) -> T>(
+        &mut self,
+        f: F,
+    ) -> Result<(), CommandError<OkResponseError>> {
+        self.any_command(EnterProgramMode).await?;
+
+        f(ProgramModeScanner(self)).await;
+
+        self.any_command(ExitProgramMode).await?;
+
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub struct ProgramModeScanner<'s>(&'s mut Scanner);
+
+impl ProgramModeScanner<'_> {
+    pub async fn command<Cmd: Command>(
+        &mut self,
+        cmd: Cmd,
+    ) -> Result<Cmd::Response, CommandError<CommandResponseError<Cmd>>> {
+        self.0.any_command(cmd).await
     }
 }

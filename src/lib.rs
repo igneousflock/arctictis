@@ -7,6 +7,6 @@ mod command;
 mod scanner;
 
 pub use crate::{
-    command::{Command, OkResponse, OkResponseError, bc125at},
-    scanner::{CommandError, Scanner, ScannerError},
+    command::{Command, NonProgramModeCommand, OkResponse, OkResponseError, bc125at},
+    scanner::{CommandError, ProgramModeScanner, Scanner, ScannerError},
 };

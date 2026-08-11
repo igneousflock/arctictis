@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use tokio_util::{
     bytes::{BufMut, Bytes, BytesMut},
     codec::{AnyDelimiterCodec, AnyDelimiterCodecError, Decoder, Encoder},
@@ -48,7 +50,7 @@ where
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum ResponseError<E> {
+pub enum ResponseError<E: Error> {
     #[error("response is for wrong command")]
     WrongCommand,
 

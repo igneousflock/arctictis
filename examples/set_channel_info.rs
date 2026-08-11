@@ -3,11 +3,8 @@
 use std::fmt::Debug;
 
 use arctictis::{
-    Command, Scanner,
-    bc125at::{
-        channel_info::{ChannelIndex, ChannelInfo, Frequency, GetChannelInfo, SetChannelInfo},
-        program_mode::{EnterProgramMode, ExitProgramMode},
-    },
+    Command, ProgramModeScanner, Scanner,
+    bc125at::channel_info::{ChannelIndex, ChannelInfo, Frequency, GetChannelInfo, SetChannelInfo},
 };
 
 #[tokio::main]
@@ -20,18 +17,21 @@ async fn main() {
 
     let mut scanner = Scanner::open().unwrap();
     println!("{scanner:#?}");
-    scanner.command(EnterProgramMode).await.unwrap();
-    print_response(&mut scanner, EnterProgramMode).await;
-    let current_info = scanner.command(GetChannelInfo(idx)).await.unwrap();
-    let new_info = ChannelInfo {
-        frequency: freq,
-        ..current_info
-    };
-    print_response(&mut scanner, SetChannelInfo(new_info)).await;
-    print_response(&mut scanner, ExitProgramMode).await;
+
+    scanner
+        .with_program_mode(async |mut scanner| {
+            let current_info = scanner.command(GetChannelInfo(idx)).await.unwrap();
+            let new_info = ChannelInfo {
+                frequency: freq,
+                ..current_info
+            };
+            print_response(&mut scanner, SetChannelInfo(new_info)).await;
+        })
+        .await
+        .unwrap();
 }
 
-async fn print_response<Cmd>(scanner: &mut Scanner, cmd: Cmd)
+async fn print_response<Cmd>(scanner: &mut ProgramModeScanner<'_>, cmd: Cmd)
 where
     Cmd: Command + Debug + 'static,
     Cmd::Response: std::fmt::Debug,
