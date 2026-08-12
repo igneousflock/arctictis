@@ -78,9 +78,13 @@ impl RawResponse {
             return Err(ResponseError::WrongNumberOfFields);
         }
 
-        let response = Cmd::Response::deserialize(self.raw_values.iter())?;
-
-        Ok(response)
+        match Cmd::Response::deserialize(self.raw_values.iter()) {
+            Ok(r) => Ok(r),
+            Err(e) => {
+                dbg!(&self.raw_values);
+                Err(e.into())
+            }
+        }
     }
 }
 

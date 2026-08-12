@@ -195,6 +195,10 @@ macro_rules! get_set_command {
                 (name.len() <= $max_len)
                     .then_some(Self(Vec::from(name)))
             }
+
+            pub fn value(&self) -> &[u8] {
+                &self.0
+            }
         }
 
         impl crate::command::IntoParam for $name {

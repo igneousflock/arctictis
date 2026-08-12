@@ -22,7 +22,7 @@ get_set_command!(
             Fm => b"FM",
             Nfm => b"NFM",
         },
-        ctcss_dcs_status: range CtcssDcsStatus (0..=231 => usize),
+        ctcss_dcs_status: range CtcssDcsStatus (0..=240 => usize),
         delay: enum Delay {
             Neg10 => b"-10",
             Neg5 => b"-5",
