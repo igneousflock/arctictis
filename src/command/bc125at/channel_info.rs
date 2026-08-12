@@ -2,7 +2,10 @@
 
 use tokio_util::bytes::Bytes;
 
-use crate::command::IntoParam;
+use crate::{
+    Command, OkResponse,
+    command::{IntoParam, SingleParam},
+};
 
 get_set_command!(
     text: b"CIN",
@@ -11,7 +14,8 @@ get_set_command!(
     type: ChannelInfo(ChannelInfoError) (
         index: range ChannelIndex(1..=500 => usize),
         name: str Name(16),
-        frequency: str Frequency(16),
+        // TODO: frequency validation
+        frequency: str Frequency(8),
         modulaton: enum Modulation {
             Auto => b"AUTO",
             Am => b"AM",
@@ -39,3 +43,18 @@ get_set_command!(
         },
     ),
 );
+
+// TODO: move ChannelIndex to a shared module
+pub struct DeleteChannel(pub ChannelIndex);
+
+impl Command for DeleteChannel {
+    const TEXT: &'static [u8] = b"DCH";
+
+    type Params = SingleParam<ChannelIndex>;
+
+    type Response = OkResponse;
+
+    fn params(self) -> Self::Params {
+        SingleParam(self.0)
+    }
+}

@@ -2,13 +2,17 @@
 
 use std::fmt::Debug;
 
-use arctictis::{NonProgramModeCommand, Scanner, bc125at::firmware_version::GetFirmwareVersion};
+use arctictis::{
+    NonProgramModeCommand, Scanner,
+    bc125at::{firmware_version::GetFirmwareVersion, model::GetModel},
+};
 
 #[tokio::main]
 async fn main() {
     let mut scanner = Scanner::open().unwrap();
     println!("{scanner:#?}");
     print_response(&mut scanner, GetFirmwareVersion).await;
+    print_response(&mut scanner, GetModel).await;
 }
 
 async fn print_response<Cmd>(scanner: &mut Scanner, cmd: Cmd)

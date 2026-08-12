@@ -46,7 +46,7 @@ macro_rules! get_set_command {
     // Param set
     (
         @params $set_name:ident ($set_error_name:ident) (
-            $($(#[$field_doc:meta])? $field_name:ident: $kind:tt $type_name:ident $body:tt),* $(,)?
+            $($(#[$field_doc:meta])? $field_name:ident: $kind:tt $type_name:ident $body:tt),+ $(,)?
         )
     ) => {
         $(get_set_command!(@param $kind $type_name $body $($field_doc)?);)*
